@@ -11,31 +11,31 @@ function Sidebar() {
         <div className='list-group list-group-flush'>
             <a className='list-group-item py-2'>
                 <i className='bi bi-speedometer2 fs-5 me-3'></i>
-                <span>Dashboard</span>
+                <span className="d-none d-sm-inline">Dashboard</span>
             </a>
             <a className='list-group-item py-2'>
                 <i className='bi bi-table fs-5 me-3'></i>
-                <span>Products</span>
+                <span className="d-none d-sm-inline">Products</span>
             </a>
             <a className='list-group-item py-2'>
                 <i className='bi bi-receipt fs-5 me-3'></i>
-                <span>Sales</span>
+                <span className="d-none d-sm-inline">Sales</span>
             </a>
             <a className='list-group-item py-2'>
                 <i className='bi bi-people fs-5 me-3'></i>
-                <span>Users</span>
+                <span className="d-none d-sm-inline">Users</span>
             </a>
             <a className='list-group-item py-2'>
                 <i className='bi bi-gear fs-5 me-3'></i>
-                <span>Settings</span>
+                <span className="d-none d-sm-inline">Settings</span>
             </a>
             <a className='list-group-item py-2'>
                 <i className='bi bi-clipboard-data fs-5 me-3'></i>
-                <span>Reports</span>
+                <span className="d-none d-sm-inline">Reports</span>
             </a>
             <a className='list-group-item py-2'>
                 <i className='bi bi-power fs-5 me-3'></i>
-                <span>Logout</span>
+                <span className="d-none d-sm-inline">Logout</span>
             </a>
         </div>
 

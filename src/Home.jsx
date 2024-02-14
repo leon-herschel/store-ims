@@ -1,3 +1,5 @@
+import LineChart from './LineChart'
+import PieChart from './PieChart'
 import Nav from './Nav'
 
 function Home({Toggle}) {
@@ -75,6 +77,14 @@ function Home({Toggle}) {
                 </tr>
             </tbody>
         </table>
+        <div className="row">
+            <div className="col-12 col-md-8 p-3 my-2">
+                <LineChart />
+            </div>
+            <div className="col-12 col-md-4 p-3 my-2">
+                <PieChart />
+            </div>
+        </div>
     </div>
   )
 }
