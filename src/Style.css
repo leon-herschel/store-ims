@@ -3,3 +3,8 @@
     color: white;
     cursor: pointer;
 }
+
+.list-group a.active {
+    background-color: black; 
+    border: none;
+}

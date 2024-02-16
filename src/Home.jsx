@@ -1,11 +1,11 @@
-import LineChart from './LineChart'
-import PieChart from './PieChart'
+import LineChart from './Charts/LineChart'
+import PieChart from './Charts/PieChart'
 import Nav from './Nav'
 
 function Home({Toggle}) {
   return (
     <div className='px-3'>
-      <Nav Toggle={Toggle}/>
+      <Nav Toggle={Toggle} pageTitle="Dashboard"/>
       <div className="container-fluid">
         <div className="row g-3 my-2">
             <div className="col-md-3 p-1">
