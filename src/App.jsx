@@ -20,13 +20,13 @@ function App() {
 
   return (
     <BrowserRouter>
-    <div className='container-fluid bg-dark min-vh-100'>
+    <div className='container-fluid min-vh-100 main-container'>
         <div className="row">
           {toggle && <div className="col-4 col-md-2 bg-white min-vh-100 position-fixed">
             <Sidebar/>
           </div>}
           {toggle && <div className='col-4 col-md-2'></div>}
-          <div className={`col-8 col-md-${toggle ? '10' : '12'} px-0 overflow-auto`}>
+          <div className={`col-${toggle ? '8' : '12'} col-md-${toggle ? '10' : '12'} px-0 overflow-auto`}>
              <Routes>
                 <Route path='/' element={<><Home Toggle={Toggle}/></>}></Route>
                 <Route path='/products' element={<><Products Toggle={Toggle}/></>}></Route>

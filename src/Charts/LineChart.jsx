@@ -7,9 +7,9 @@ const data = {
     labels: labels,
     datasets: [
         {
-            label: "My First Dataset",
-            backgroundColor: "#000",
-            borderColor: "#000",
+            label: "Sales",
+            backgroundColor: "rgb(0, 0, 30)",
+            borderColor: "rgb(0, 0, 30)",
             data: [0, 10, 5, 2, 20, 30, 45],
         },
     ],
