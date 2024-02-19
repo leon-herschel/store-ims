@@ -2,12 +2,14 @@ import './App.css'
 import 'bootstrap/dist/css/bootstrap.min.css'
 import 'bootstrap-icons/font/bootstrap-icons.css'
 import Sidebar from './Sidebar'
-import Home from './Home'
-import Products from './Products'
-import Sales from './Sales'
-import Users from './Users'
-import Settings from './Settings'
-import Reports from './Reports'
+import Home from './Pages/Home'
+import Products from './Pages/Products'
+import Sales from './Pages/Sales'
+import Users from './Pages/Users'
+import Settings from './Pages/Settings'
+import Reports from './Pages/Reports'
+import Login from './Login'
+import Signup from './Signup'
 import { useState } from 'react'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 
@@ -28,6 +30,8 @@ function App() {
           {toggle && <div className='col-4 col-md-2'></div>}
           <div className={`col-${toggle ? '8' : '12'} col-md-${toggle ? '10' : '12'} px-0 overflow-auto`}>
              <Routes>
+                {/* <Route path='/login' element={<Login />} /> */}
+                {/*<Route path='/signup' element={<Signup />} /> */}
                 <Route path='/' element={<><Home Toggle={Toggle}/></>}></Route>
                 <Route path='/products' element={<><Products Toggle={Toggle}/></>}></Route>
                 <Route path='/sales' element={<><Sales Toggle={Toggle}/></>}></Route>

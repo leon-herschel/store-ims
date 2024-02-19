@@ -1,14 +1,14 @@
 import { Link, useLocation } from 'react-router-dom'
-import './Style.css'
-import logo from './assets/logo.svg'
+import './Sidebar.css'
+import logo from './assets/logo.png'
 
 function Sidebar() {
   const location = useLocation()
 
   return (
     <div className='bg-white p-2'>
-      <div className='m-2'>
-      <img src={logo} alt="Carlos Fishing Supplies" className="me-2 fs-2" />
+      <div className='text-center'>
+        <img src={logo} alt="Carlos Fishing Supplies" className="p-0 fs-2 store-logo" />
       </div>
       <hr className='text-dark'/>
       <div className='list-group list-group-flush'>
