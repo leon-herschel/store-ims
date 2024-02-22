@@ -10,7 +10,7 @@ const data = {
             label: "Sales",
             backgroundColor: "rgb(0, 0, 30)",
             borderColor: "#fff",
-            data: [0, 10, 5, 2, 20, 30, 45],
+            data: [1, 0, 3, 1, 2, 10],
         },
     ],
 }

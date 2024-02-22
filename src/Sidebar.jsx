@@ -1,18 +1,31 @@
-import { Link, useLocation } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom' 
 import './Sidebar.css'
 import logo from './assets/logo.png'
+import { auth } from './firebaseConfig'
 
 function Sidebar() {
   const location = useLocation()
+  const navigate = useNavigate() 
+
+  const handleSignOut = () => {
+    auth.signOut()
+      .then(() => {
+        console.log('User signed out successfully')
+        navigate('/')
+      })
+      .catch((error) => {
+        console.error('Error signing out:', error)
+      })
+  }
 
   return (
-    <div className='bg-white p-2'>
-      <div className='text-center'>
-        <img src={logo} alt="Carlos Fishing Supplies" className="p-0 fs-2 store-logo" />
+    <div className='bg-white p-1'>
+      <div className='pt-3'>
+        <img src={logo} alt="Carlos Fishing Supplies" className="p-0 fs-2 store-logo img-fluid" />
       </div>
       <hr className='text-dark'/>
       <div className='list-group list-group-flush'>
-        <Link to="/" className={location.pathname === '/' ? 'active list-group-item py-2' : 'list-group-item py-2'}>
+        <Link to="/home" className={location.pathname === '/home' ? 'active list-group-item py-2' : 'list-group-item py-2'}>
           <i className='bi bi-speedometer2 fs-5 me-3'></i>
           <span className="d-none d-sm-inline">Dashboard</span>
         </Link>
@@ -36,10 +49,10 @@ function Sidebar() {
           <i className='bi bi-clipboard-data fs-5 me-3'></i>
           <span className="d-none d-sm-inline">Reports</span>
         </Link>
-        <a href="/logout" className='list-group-item py-2'>
+        <Link to="/" className='list-group-item py-2' onClick={handleSignOut}>
           <i className='bi bi-power fs-5 me-3'></i>
           <span className="d-none d-sm-inline">Logout</span>
-        </a>
+        </Link>
       </div>
     </div>
   )
