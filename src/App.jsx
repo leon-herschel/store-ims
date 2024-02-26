@@ -15,46 +15,44 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom'
 function App() {
   const [toggle, setToggle] = useState(true)
 
-  const Toggle = () => {
-    setToggle(!toggle)
+  const handleToggle = () => {
+    try {
+      setToggle(!toggle)
+    } catch (error) {
+      console.error('Error toggling sidebar:', error)
+    }
   }
 
   return (
     <BrowserRouter>
       <div className='container-fluid min-vh-100 main-container'>
         <Routes>
-          <Route path="/" element={<Login Toggle={Toggle} />} /> 
-          <Route path="/*" element={<MainRoutes Toggle={Toggle} />} />
+          <Route path="/" element={<Login handleToggle={handleToggle} />} /> 
+          <Route path="/*" element={
+            <div className="row">
+              {toggle && (
+                <div className="col-4 col-md-2 bg-white min-vh-100 position-fixed">
+                  <Sidebar/>
+                </div>
+              )}
+              {toggle && (
+                <div className='col-4 col-md-2'></div>
+              )}
+              <div className={`col-${toggle ? '8' : '12'} col-md-${toggle ? '10' : '12'} px-${toggle ? '0' : '5'} overflow-auto`}>
+                <Routes>
+                  <Route path="/home" element={<Home Toggle={handleToggle}/>}></Route>
+                  <Route path="/products" element={<Products Toggle={handleToggle}/>}></Route>
+                  <Route path="/sales" element={<Sales Toggle={handleToggle}/>}></Route>
+                  <Route path="/users" element={<Users Toggle={handleToggle}/>}></Route>
+                  <Route path="/settings" element={<Settings Toggle={handleToggle}/>}></Route>
+                  <Route path="/reports" element={<Reports Toggle={handleToggle}/>}></Route>
+                </Routes>
+              </div>
+            </div>
+          } />
         </Routes>
       </div>
     </BrowserRouter>
-  )
-}
-
-function MainRoutes({ Toggle }) {
-  const [toggle, setToggle] = useState(true)
-
-  return (
-    <div className="row">
-      {toggle && (
-        <div className="col-4 col-md-2 bg-white min-vh-100 position-fixed">
-          <Sidebar/>
-        </div>
-      )}
-      {toggle && (
-        <div className='col-4 col-md-2'></div>
-      )}
-      <div className={`col-${toggle ? '8' : '12'} col-md-${toggle ? '10' : '12'} px-0 overflow-auto`}>
-        <Routes>
-          <Route path="/home" element={<Home Toggle={Toggle}/>}></Route>
-          <Route path="/products" element={<Products Toggle={Toggle}/>}></Route>
-          <Route path="/sales" element={<Sales Toggle={Toggle}/>}></Route>
-          <Route path="/users" element={<Users Toggle={Toggle}/>}></Route>
-          <Route path="/settings" element={<Settings Toggle={Toggle}/>}></Route>
-          <Route path="/reports" element={<Reports Toggle={Toggle}/>}></Route>
-        </Routes>
-      </div>
-    </div>
   )
 }
 

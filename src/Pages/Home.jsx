@@ -5,7 +5,7 @@ import Nav from '../Nav'
 function Home({Toggle}) {
   return (
     <div className='px-3'>
-      <Nav Toggle={Toggle} pageTitle="Dashboard"/>
+      <Nav Toggle={Toggle} pageTitle="Home"/>
       <div className="container-fluid">
         <div className="row g-3 my-2">
             <div className="col-md-3 p-1">
@@ -46,7 +46,8 @@ function Home({Toggle}) {
             </div>
         </div>
       </div>
-        <table class="table caption-top shadow-sm bg-white rounded overflow-hidden mt-2">
+      <div className='row m-2'>
+         <table class="table caption-top shadow-sm rounded overflow-hidden bg-white">
             <caption className="text-white fs-4">Inventory</caption>
             <thead>
                 <tr>
@@ -76,7 +77,8 @@ function Home({Toggle}) {
                     <td>daiwa</td>
                 </tr>
             </tbody>
-        </table>
+         </table>
+        </div>
         <div className="row">
             <div className="col-12 col-md-8 p-3 my-2">
                 <LineChart />
