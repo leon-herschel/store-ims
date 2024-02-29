@@ -11,6 +11,8 @@ import Reports from './Pages/Reports'
 import Login from './Login'
 import { useState } from 'react'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import Private from './Private'
+import PageNotFound from './Pages/NotFound'
 
 function App() {
   const [toggle, setToggle] = useState(true)
@@ -40,12 +42,13 @@ function App() {
               )}
               <div className={`col-${toggle ? '8' : '12'} col-md-${toggle ? '10' : '12'} px-${toggle ? '0' : '5'} overflow-auto`}>
                 <Routes>
-                  <Route path="/home" element={<Home Toggle={handleToggle}/>}></Route>
-                  <Route path="/products" element={<Products Toggle={handleToggle}/>}></Route>
-                  <Route path="/sales" element={<Sales Toggle={handleToggle}/>}></Route>
-                  <Route path="/users" element={<Users Toggle={handleToggle}/>}></Route>
-                  <Route path="/settings" element={<Settings Toggle={handleToggle}/>}></Route>
-                  <Route path="/reports" element={<Reports Toggle={handleToggle}/>}></Route>
+                  <Route path="/home" element={Private(<Home Toggle={handleToggle}/>)}></Route>
+                  <Route path="/products" element={Private(<Products Toggle={handleToggle}/>)}></Route>
+                  <Route path="/sales" element={Private(<Sales Toggle={handleToggle}/>)}></Route>
+                  <Route path="/users" element={Private(<Users Toggle={handleToggle}/>)}></Route>
+                  <Route path="/settings" element={Private(<Settings Toggle={handleToggle}/>)}></Route>
+                  <Route path="/reports" element={Private(<Reports Toggle={handleToggle}/>)}></Route>
+                  <Route path="*" element={Private(<PageNotFound/>)} />
                 </Routes>
               </div>
             </div>

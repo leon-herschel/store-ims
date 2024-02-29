@@ -44,10 +44,6 @@ function Login() {
 
   const handlePasswordReset = () => {
     setResetPassRequested(true)
-    if (resetPassRequested && !email) {
-      setErrorMessage('Please enter your email.')
-      return;
-    }
     sendPasswordResetEmail(auth, email)
       .then(() => {
         setErrorMessage('Password reset email sent. Check your inbox.')

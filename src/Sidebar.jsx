@@ -26,7 +26,7 @@ function Sidebar() {
       <hr className='text-dark'/>
       <div className='list-group list-group-flush'>
         <Link to="/home" className={location.pathname === '/home' ? 'active list-group-item py-2 m-0 rounded' : 'list-group-item py-2 rounded'}>
-          <i className='bi bi-house fs-5 me-3'></i>
+          <i className='bi bi-house-door fs-5 me-3'></i>
           <span className="d-none d-sm-inline">Home</span>
         </Link>
         <Link to="/products" className={location.pathname === '/products' ? 'active list-group-item py-2 rounded' : 'list-group-item py-2 rounded'}>
