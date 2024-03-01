@@ -13,6 +13,7 @@ import { useState } from 'react'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import Private from './Private'
 import PageNotFound from './Pages/NotFound'
+import { AuthProvider } from './AuthContext'
 
 function App() {
   const [toggle, setToggle] = useState(true)
@@ -27,9 +28,10 @@ function App() {
 
   return (
     <BrowserRouter>
+    <AuthProvider>
       <div className='container-fluid min-vh-100 main-container'>
         <Routes>
-          <Route path="/" element={<Login handleToggle={handleToggle} />} /> 
+          <Route path="/" element={<Login />} /> 
           <Route path="/*" element={
             <div className="row">
               {toggle && (
@@ -55,6 +57,7 @@ function App() {
           } />
         </Routes>
       </div>
+      </AuthProvider>
     </BrowserRouter>
   )
 }

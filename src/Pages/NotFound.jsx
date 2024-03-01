@@ -1,6 +1,12 @@
 import { Link } from 'react-router-dom'
+import { useEffect, useState } from 'react'
 
-function PageNotFound({Toggle}) {
+const PageNotFound = () => {
+  const [toggle, setToggle] = useState(true); 
+
+  useEffect(() => {
+    setToggle(false); 
+  }, []); 
   return ( 
     <div className="main-container mt-5 text-white">
       <h1 className="display-1 text-center">404</h1>

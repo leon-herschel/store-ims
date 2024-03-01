@@ -9,15 +9,16 @@ function Login() {
   const [errorMessage, setErrorMessage] = useState('')
   const [resetPassRequested, setResetPassRequested] = useState(false)
   const [email, setEmail] = useState('')
-  const [loading, setLoading] = useState(false)
+  const [password, setPassword] = useState('')
+  const [loading, setLoading] = useState(false) // Added loading state
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     setEmail(e.target.email.value)
-    const password = e.target.password.value
+    setPassword(e.target.password.value)
 
     try {
-      setLoading(true) 
+      setLoading(true) // Set loading to true during login process
       await signInWithEmailAndPassword(auth, email, password)
       navigate('/home')
     } catch (error) {
@@ -32,7 +33,7 @@ function Login() {
       }
       setErrorMessage(customErrorMessage)
     } finally {
-      setLoading(false) 
+      setLoading(false) // Set loading back to false after login process
     }
   }
 
@@ -58,6 +59,10 @@ function Login() {
     setEmail(e.target.value)
   }
 
+  const handlePasswordChange = (e) => {
+    setPassword(e.target.value)
+  }
+
   return (
     <div className="d-flex justify-content-center align-items-center vh-100 bg-container">
       <div className="form-container p-5 rounded bg-white shadow">
@@ -65,15 +70,15 @@ function Login() {
           <h2 className="text-start fw-bold mb-1">Login</h2>
           <p className='text-start fs-8'>Please login to continue</p>
           <div className="my-3">
-            <input 
-              name="email" 
-              type="email" 
-              placeholder="Email" 
+            <input
+              name="email"
+              type="email"
+              placeholder="Email"
               className={`form-control ${resetPassRequested && !email && 'is-invalid'}`}
               value={email}
               onChange={handleEmailChange}
             />
-             {resetPassRequested && !email && <div className="invalid-feedback">Please enter your email.</div>}
+            {resetPassRequested && !email && <div className="invalid-feedback">Please enter your email.</div>}
           </div>
           <div className="my-3">
             <div className="input-group">
@@ -82,31 +87,31 @@ function Login() {
                 type={passwordVisible ? 'text' : 'password'}
                 placeholder="Password"
                 className="form-control"
+                value={password}
+                onChange={handlePasswordChange}
               />
-                <button
-                  className="btn btn-outline-secondary"
-                  type="button"
-                  onClick={togglePasswordVisibility}
-                >
-                  <i
-                    className={`bi bi-${passwordVisible ? 'eye-slash-fill' : 'eye-fill'}`}
-                  />
-                </button>
+              <button
+                className="btn btn-outline-secondary"
+                type="button"
+                onClick={togglePasswordVisibility}
+              >
+                <i
+                  className={`bi bi-${passwordVisible ? 'eye-slash-fill' : 'eye-fill'}`}
+                />
+              </button>
             </div>
           </div>
           <div className="d-grid my-3 shadow">
-            {loading ? (
-              <button className="btn btn-primary login-btn" type="button" disabled>
+            <button type="submit" className="btn btn-primary login-btn" disabled={loading}> {/* Disable button when loading */}
+              {loading ? (
                 <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                Logging in...
-              </button>
-            ) : (
-              <button type="submit" className="btn btn-primary login-btn">Login</button>
-            )}
+              ) : null}
+              Login
+            </button>
           </div>
           <div className="my-3">
             {errorMessage && (<p className={`text-${errorMessage === 'Password reset email sent. Check your inbox.' ? 'success' : 'danger'}`}>
-            {errorMessage}</p>)}
+              {errorMessage}</p>)}
           </div>
           <p className="text-center my-3 text-primary" role="button" onClick={handlePasswordReset}>
             Forgot password?
