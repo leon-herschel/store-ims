@@ -1,12 +1,9 @@
 import Nav from '../Nav'
 import { useState, useEffect } from 'react'
-import { collection, doc, setDoc, serverTimestamp, getDocs, deleteDoc, updateDoc } from 'firebase/firestore'
+import { ref, set, serverTimestamp, get, remove, push, update } from 'firebase/database'
 import { db } from '../firebaseConfig'
-import { v4 as uuid } from "uuid"
 
 function Users({ Toggle }) {
-    const unique_id = uuid()
-    const small_id = unique_id.slice(0, 5)
     const [users, setUsers] = useState([])
     const [showForm, setShowForm] = useState(false)
     const [editMode, setEditMode] = useState(false)
@@ -21,72 +18,102 @@ function Users({ Toggle }) {
     const [confirmationMessage, setConfirmationMessage] = useState('')
     const [errorMessage, setErrorMessage] = useState('')
 
-    const handleAdd = async (e) => {
-        e.preventDefault()
-        try {
-            if (editMode) {
-                await updateDoc(doc(db, 'users', editUserId), {
-                    name: formData.name,
-                    email: formData.email,
-                    access: formData.access,
-                    password: formData.password,
-                    timeStamp: serverTimestamp()
-                })
-                setConfirmationMessage('User updated successfully.')
-                setEditMode(false)
-                setEditUserId('')
-            } else {
-                await setDoc(doc(db, "users", small_id), {
-                    name: formData.name,
-                    email: formData.email,
-                    access: formData.access,
-                    password: formData.password,
-                    timeStamp: serverTimestamp()
-                })
-                setConfirmationMessage('User added successfully.')
+    useEffect(() => {
+        const getUsers = async () => {
+            try {
+                const usersRef = ref(db, 'users');
+                const snapshot = await get(usersRef);
+                if (snapshot.exists()) {
+                    const usersArray = [];
+                    snapshot.forEach(childSnapshot => {
+                        usersArray.push({
+                            key: childSnapshot.key, 
+                            ...childSnapshot.val()
+                        });
+                    });
+                    setUsers(usersArray);
+                }
+            } catch (error) {
+                setErrorMessage('Error fetching users.');
+                console.error("Error fetching users: ", error);
             }
-            setShowForm(false)
-            setFormData({
-                name: '',
-                email: '',
-                access: '',
-                password: ''
-            })
+        };
+
+        getUsers()
+    }, [])
+
+    const handleAdd = async (e) => {
+        e.preventDefault();
+      
+        try {
+          const usersRef = ref(db, 'users');
+      
+          // Use `update` for both adding and updating (adjusted for specific needs):
+          await update(usersRef, {
+            [editMode ? editUserId : push(usersRef).key]: {
+              name: formData.name,
+              email: formData.email,
+              access: formData.access,
+              password: formData.password, // Consider secure password handling
+              timeStamp: serverTimestamp()
+            }
+          });
+      
+          // Set appropriate confirmation messages:
+          setConfirmationMessage(editMode ? 'User updated successfully.' : 'User added successfully.');
+      
+          // Clear form data and states:
+          setEditMode(false);
+          setEditUserId('');
+          setShowForm(false);
+          setFormData({
+            name: '',
+            email: '',
+            access: '',
+            password: ''
+          });
         } catch (err) {
-            setErrorMessage('Error adding/editing user.')
-            console.error("Error adding/editing document: ", err)
+          setErrorMessage('Error adding/editing user.');
+          console.error("Error adding/editing document: ", err);
         }
-    }
+      };
+      
+      
+    
 
     const handleEdit = (id) => {
-        const userToEdit = users.find(user => user.id === id)
-        setFormData({
-            name: userToEdit.name,
-            email: userToEdit.email,
-            access: userToEdit.access,
-            password: userToEdit.password
-        })
-        setEditMode(true)
-        setEditUserId(id)
-        setShowForm(true)
+        setEditUserId(id); 
+        const userToEdit = users.find(user => user.key === id); // Use 'key' instead of 'id'
+        if (userToEdit) {
+            setFormData({
+                name: userToEdit.name,
+                email: userToEdit.email,
+                access: userToEdit.access,
+                password: userToEdit.password
+            });
+            setEditMode(true); // Enable edit mode
+            setShowForm(true); // Show the form for editing
+        } else {
+            console.error("User not found with ID:", id);
+        }
     }
-
+    
     const handleDelete = (id) => {
-        setEditUserId(id)
-        setShowDeleteConfirmation(true)
+        setEditUserId(id); 
+        setShowDeleteConfirmation(true); 
     }
-
+    
     const confirmDelete = async () => {
         try {
-            await deleteDoc(doc(db, 'users', editUserId))
-            setConfirmationMessage('User deleted successfully.')
-            console.log("Document with ID ", editUserId, " successfully deleted")
+            await remove(ref(db, 'users/' + editUserId)); 
+            setConfirmationMessage('User deleted successfully.');
+            console.log("User with ID ", editUserId, " successfully deleted");
         } catch (error) {
-            setErrorMessage('Error deleting user.')
-            console.error("Error deleting document: ", error)
+            setErrorMessage('Error deleting user.');
+            console.error("Error deleting user: ", error);
         } finally {
-            setEditUserId('')
-            setShowDeleteConfirmation(false)
+            setEditUserId('');
+            setShowDeleteConfirmation(false);
         }
     }
 
@@ -109,24 +136,6 @@ function Users({ Toggle }) {
             [name]: value
         })
     }
-
-    useEffect(() => {
-        const getUsers = async () => {
-            try {
-                const querySnapshot = await getDocs(collection(db, 'users'))
-                const usersData = []
-                querySnapshot.forEach((doc) => {
-                    usersData.push({ id: doc.id, ...doc.data() })
-                })
-                setUsers(usersData)
-            } catch (error) {
-                setErrorMessage('Error fetching users.')
-                console.error("Error fetching users: ", error)
-            }
-        }
-
-        getUsers()
-    }, [])
 
     const [passwordVisible, setPasswordVisible] = useState(false)
 
@@ -163,7 +172,7 @@ function Users({ Toggle }) {
                         <table className="table table-striped table-hover mt-3 text-center shadow-sm rounded overflow-hidden">
                             <thead>
                                 <tr>
-                                    <th scope='col'>ID</th>
+                                    <th scope='col'>User ID</th>
                                     <th scope='col'>Name</th>
                                     <th scope='col'>Email</th>
                                     <th scope='col'>Access</th>
@@ -172,14 +181,14 @@ function Users({ Toggle }) {
                             </thead>
                             <tbody className='table-striped'>
                                 {users.map(user => (
-                                    <tr key={user.id}>
-                                        <td>{user.id}</td>
+                                    <tr key={user.key}>
+                                        <td>{user.key}</td>
                                         <td>{user.name}</td>
                                         <td>{user.email}</td>
                                         <td>{user.access}</td>
                                         <td>
-                                            <button onClick={() => handleEdit(user.id)} className="btn btn-success me-2">Edit</button>
-                                            <button onClick={() => handleDelete(user.id)} className="btn btn-danger">Delete</button>
+                                            <button onClick={() => handleEdit(user.key)} className="btn btn-success me-2">Edit</button>
+                                            <button onClick={() => handleDelete(user.key)} className="btn btn-danger">Delete</button>
                                         </td>
                                     </tr>
                                 ))}
