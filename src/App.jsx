@@ -8,12 +8,12 @@ import Sales from './Pages/Sales'
 import Users from './Pages/Users'
 import Settings from './Pages/Settings'
 import Reports from './Pages/Reports'
-import Login from './Login'
+import Login from './Components/Login/Login'
 import { useState } from 'react'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
-import Private from './Private'
+import Private from './Components/Login/Private'
 import PageNotFound from './Pages/NotFound'
-import { AuthProvider } from './AuthContext'
+import { AuthProvider } from './Components/Login/AuthContext'
 
 function App() {
   const [toggle, setToggle] = useState(true)

@@ -1,5 +1,5 @@
-import LineChart from '../Charts/LineChart'
-import PieChart from '../Charts/PieChart'
+import LineChart from '../Components/Charts/LineChart'
+import PieChart from '../Components/Charts/PieChart'
 import Nav from '../Nav'
 
 function Home({Toggle}) {

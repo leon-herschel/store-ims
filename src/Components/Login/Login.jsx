@@ -1,7 +1,7 @@
 import './Login.css'
 import { useNavigate } from 'react-router-dom'
 import { sendPasswordResetEmail, signInWithEmailAndPassword } from 'firebase/auth'
-import { auth } from './firebaseConfig'
+import { auth } from '../../firebaseConfig'
 import { useState } from 'react'
 
 function Login() {
@@ -10,7 +10,7 @@ function Login() {
   const [resetPassRequested, setResetPassRequested] = useState(false)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [loading, setLoading] = useState(false) // Added loading state
+  const [loading, setLoading] = useState(false) 
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -102,7 +102,7 @@ function Login() {
             </div>
           </div>
           <div className="d-grid my-3 shadow">
-            <button type="submit" className="btn btn-primary login-btn" disabled={loading}> {/* Disable button when loading */}
+            <button type="submit" className="btn btn-primary login-btn" disabled={loading}> 
               {loading ? (
                 <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
               ) : null}
