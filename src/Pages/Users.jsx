@@ -1,6 +1,8 @@
 import Nav from '../Nav'
 import { useState, useEffect } from 'react'
-import { ref, set, serverTimestamp, get, remove, push, update } from 'firebase/database'
+import { ref, set, serverTimestamp, remove, push, update, onValue } from 'firebase/database'
+import { createUserWithEmailAndPassword, sendEmailVerification } from 'firebase/auth'
+import { auth } from '../firebaseConfig'
 import { db } from '../firebaseConfig'
 
 function Users({ Toggle }) {
@@ -8,82 +10,88 @@ function Users({ Toggle }) {
     const [showForm, setShowForm] = useState(false)
     const [editMode, setEditMode] = useState(false)
     const [editUserId, setEditUserId] = useState('')
+    const [searchQuery, setSearchQuery] = useState('')
     const [formData, setFormData] = useState({
         name: '',
         email: '',
         access: '',
         password: ''
-    })
+    });
     const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false)
     const [confirmationMessage, setConfirmationMessage] = useState('')
     const [errorMessage, setErrorMessage] = useState('')
 
     useEffect(() => {
-        const getUsers = async () => {
-            try {
-                const usersRef = ref(db, 'users');
-                const snapshot = await get(usersRef);
-                if (snapshot.exists()) {
-                    const usersArray = [];
-                    snapshot.forEach(childSnapshot => {
-                        usersArray.push({
-                            key: childSnapshot.key, 
-                            ...childSnapshot.val()
-                        });
-                    });
-                    setUsers(usersArray);
-                }
-            } catch (error) {
-                setErrorMessage('Error fetching users.');
-                console.error("Error fetching users: ", error);
+        const usersRef = ref(db, 'users')
+        const unsubscribe = onValue(usersRef, (snapshot) => {
+            if (snapshot.exists()) {
+                const usersArray = []
+                snapshot.forEach(childSnapshot => {
+                    usersArray.push({
+                        key: childSnapshot.key, 
+                        ...childSnapshot.val()
+                    })
+                })
+                setUsers(usersArray)
             }
-        };
+        })
 
-        getUsers()
+        return () => {
+            unsubscribe()
+        }
     }, [])
 
     const handleAdd = async (e) => {
         e.preventDefault();
-      
+        
         try {
-          const usersRef = ref(db, 'users');
-      
-          // Use `update` for both adding and updating (adjusted for specific needs):
-          await update(usersRef, {
-            [editMode ? editUserId : push(usersRef).key]: {
-              name: formData.name,
-              email: formData.email,
-              access: formData.access,
-              password: formData.password, // Consider secure password handling
-              timeStamp: serverTimestamp()
-            }
-          });
-      
-          // Set appropriate confirmation messages:
-          setConfirmationMessage(editMode ? 'User updated successfully.' : 'User added successfully.');
-      
-          // Clear form data and states:
-          setEditMode(false);
-          setEditUserId('');
-          setShowForm(false);
-          setFormData({
-            name: '',
-            email: '',
-            access: '',
-            password: ''
-          });
-        } catch (err) {
-          setErrorMessage('Error adding/editing user.');
-          console.error("Error adding/editing document: ", err);
-        }
-      };
-      
-      
+            const { email, password } = formData;
+            const usersRef = ref(db, 'users');
     
-
+            if (editMode) {
+                // Handle user update
+                await update(ref(db, `users/${editUserId}`), {
+                    name: formData.name,
+                    access: formData.access,
+                    timeStamp: serverTimestamp()
+                });
+                setConfirmationMessage('User updated successfully.')
+            } else {
+                const userCredential = await createUserWithEmailAndPassword(auth, email, password)
+                const user = userCredential.user
+                
+                await sendEmailVerification(user)
+    
+                await update(usersRef, {
+                    [user.uid]: {
+                        name: formData.name,
+                        email: formData.email,
+                        access: formData.access,
+                        timeStamp: serverTimestamp()
+                    }
+                });
+                setConfirmationMessage('User added successfully. Verification email sent.')
+            }
+    
+            setEditMode(false)
+            setEditUserId('')
+            setShowForm(false)
+            setFormData({
+                name: '',
+                email: '',
+                access: '',
+                password: ''
+            });
+        } catch (err) {
+            setErrorMessage('Error adding/editing user.')
+            console.error("Error adding/editing user: ", err)
+        }
+    }
+    
+      
     const handleEdit = (id) => {
-        setEditUserId(id); 
-        const userToEdit = users.find(user => user.key === id); // Use 'key' instead of 'id'
+        setEditUserId(id)
+        const userToEdit = users.find(user => user.key === id)
         if (userToEdit) {
             setFormData({
                 name: userToEdit.name,
@@ -91,29 +99,36 @@ function Users({ Toggle }) {
                 access: userToEdit.access,
                 password: userToEdit.password
             });
-            setEditMode(true); // Enable edit mode
-            setShowForm(true); // Show the form for editing
+            setEditMode(true)
+            setShowForm(true)
         } else {
-            console.error("User not found with ID:", id);
+            console.error("User not found with ID:", id)
         }
     }
     
     const handleDelete = (id) => {
         setEditUserId(id); 
-        setShowDeleteConfirmation(true); 
+        setShowDeleteConfirmation(true) 
     }
     
     const confirmDelete = async () => {
         try {
-            await remove(ref(db, 'users/' + editUserId)); 
-            setConfirmationMessage('User deleted successfully.');
-            console.log("User with ID ", editUserId, " successfully deleted");
+            const userToDelete = await getUserByEmail(users.find(user => user.key === editUserId).email)
+            
+            // Delete the user from authentication
+            await deleteUser(auth, userToDelete.uid)
+    
+            // Delete the user from the database
+            await remove(ref(db, 'users/' + editUserId))
+            
+            setConfirmationMessage('User deleted successfully.')
+            console.log("User with ID ", editUserId, " successfully deleted")
         } catch (error) {
-            setErrorMessage('Error deleting user.');
-            console.error("Error deleting user: ", error);
+            setErrorMessage('Error deleting user.')
+            console.error("Error deleting user: ", error)
         } finally {
-            setEditUserId('');
-            setShowDeleteConfirmation(false);
+            setEditUserId('')
+            setShowDeleteConfirmation(false)
         }
     }
 
@@ -137,11 +152,15 @@ function Users({ Toggle }) {
         })
     }
 
-    const [passwordVisible, setPasswordVisible] = useState(false)
+    const handleSearchChange = (e) => {
+        setSearchQuery(e.target.value)
+    }
 
     const togglePasswordVisibility = () => {
         setPasswordVisible(!passwordVisible)
     }
+
+    const [passwordVisible, setPasswordVisible] = useState(false)
 
     useEffect(() => {
         const confirmationTimeout = setTimeout(() => {
@@ -162,9 +181,20 @@ function Users({ Toggle }) {
         <div className='px-3'>
             <Nav Toggle={Toggle} pageTitle="Users"/>
             <section className="p-3">
-                <div className="row">
-                    <div className="col-12">
+                <div className="row d-flex">
+                    <div className="col-6">
                         <button onClick={() => setShowForm(true)} className="btn btn-primary newUser" data-bs-toggle="modal" data-bs-target="#userForm">Add User</button>
+                    </div>
+                    <div className="col-6 d-flex justify-content-end">
+                        <div className="w-50">
+                            <input 
+                                type="text" 
+                                className="form-control me-2" 
+                                placeholder="Search" 
+                                value={searchQuery} 
+                                onChange={handleSearchChange} 
+                            />
+                        </div>
                     </div>
                 </div>
                 <div className="row">
@@ -180,7 +210,10 @@ function Users({ Toggle }) {
                                 </tr>
                             </thead>
                             <tbody className='table-striped'>
-                                {users.map(user => (
+                            {users.filter(user => {
+                                const userDataString = Object.values(user).join(' ').toLowerCase();
+                                return userDataString.includes(searchQuery.toLowerCase());
+                                }).map(user => (
                                     <tr key={user.key}>
                                         <td>{user.key}</td>
                                         <td>{user.name}</td>
@@ -209,28 +242,32 @@ function Users({ Toggle }) {
                             <div className="modal-body d-flex justify-content-center align-items-center">
                                 <form onSubmit={handleAdd} className="w-75">
                                     <input type="text" name="name" value={formData.name} onChange={handleChange} className="form-control mb-3" placeholder="Name" required />
-                                    <input type="email" name="email" value={formData.email} onChange={handleChange} className="form-control mb-3" placeholder="Email" required autoComplete='off'/>
+                                    <div className={`mb-3 ${editMode ? 'd-none' : ''}`}>
+                                        <input type="email" name="email" value={formData.email} onChange={handleChange} className="form-control" placeholder="Email" required autoComplete='off'/>
+                                    </div>
                                     <select name="access" value={formData.access} onChange={handleChange} className="form-select mb-3" required>
                                         <option value="">Select Access</option>
                                         <option value="Admin">Admin</option>
                                         <option value="User">User</option>
                                     </select>
-                                    <div className="input-group">
+                                    <div className={`input-group mb-3 ${editMode ? 'd-none' : ''}`}>
                                         <input 
                                             name="password"  
                                             type={passwordVisible ? 'text' : 'password'} 
                                             value={formData.password} 
                                             onChange={handleChange} 
-                                            className="form-control mb-3" 
+                                            className="form-control" 
                                             placeholder="Password" 
                                             required 
                                             autoComplete="new-password"
+                                            disabled={editMode}
                                         />
                                         <div className="input-group-append">
                                             <button
                                                 className="btn btn-outline-secondary"
                                                 type="button"
-                                                onClick={togglePasswordVisibility}>
+                                                onClick={togglePasswordVisibility}
+                                                disabled={editMode}>
                                                 <i className={`bi bi-${passwordVisible ? 'eye-slash-fill' : 'eye-fill'}`} />
                                             </button>
                                         </div>
