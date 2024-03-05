@@ -1,9 +1,10 @@
 import Nav from '../Nav'
 import { useState, useEffect } from 'react'
-import { ref, set, serverTimestamp, remove, push, update, onValue } from 'firebase/database'
+import { ref, serverTimestamp, remove, update, onValue } from 'firebase/database'
 import { createUserWithEmailAndPassword, sendEmailVerification } from 'firebase/auth'
 import { auth } from '../firebaseConfig'
 import { db } from '../firebaseConfig'
+import { deleteUser } from 'firebase/auth'
 
 function Users({ Toggle }) {
     const [users, setUsers] = useState([])
@@ -49,7 +50,6 @@ function Users({ Toggle }) {
             const usersRef = ref(db, 'users');
     
             if (editMode) {
-                // Handle user update
                 await update(ref(db, `users/${editUserId}`), {
                     name: formData.name,
                     access: formData.access,
@@ -113,24 +113,27 @@ function Users({ Toggle }) {
     
     const confirmDelete = async () => {
         try {
-            const userToDelete = await getUserByEmail(users.find(user => user.key === editUserId).email)
-            
+            const userToDeleteId = editUserId; // Get the ID of the user to delete
+    
+            // Retrieve the user's email from the database
+            const userToDeleteEmail = users.find(user => user.key === userToDeleteId).email;
+    
             // Delete the user from authentication
-            await deleteUser(auth, userToDelete.uid)
+            await deleteUser(auth, userToDeleteEmail);
     
             // Delete the user from the database
-            await remove(ref(db, 'users/' + editUserId))
-            
-            setConfirmationMessage('User deleted successfully.')
-            console.log("User with ID ", editUserId, " successfully deleted")
+            await remove(ref(db, 'users/' + userToDeleteId));
+    
+            setConfirmationMessage('User deleted successfully.');
+            console.log("User with ID ", userToDeleteId, " successfully deleted");
         } catch (error) {
-            setErrorMessage('Error deleting user.')
-            console.error("Error deleting user: ", error)
+            setErrorMessage('Error deleting user.');
+            console.error("Error deleting user: ", error);
         } finally {
-            setEditUserId('')
-            setShowDeleteConfirmation(false)
+            setEditUserId('');
+            setShowDeleteConfirmation(false);
         }
-    }
+    };
 
     const handleCloseForm = () => {
         setFormData({

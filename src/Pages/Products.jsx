@@ -157,7 +157,7 @@ function Products({ Toggle }) {
             <section className="p-3">
                 <div className="row d-flex">
                     <div className="col-6">
-                        <button onClick={() => setShowForm(true)} className="btn btn-primary newUser" data-bs-toggle="modal" data-bs-target="#userForm">Add User</button>
+                        <button onClick={() => setShowForm(true)} className="btn btn-primary newUser" data-bs-toggle="modal" data-bs-target="#userForm">Add Product</button>
                     </div>
                     <div className="col-6 d-flex justify-content-end">
                         <div className="w-50">
@@ -176,8 +176,8 @@ function Products({ Toggle }) {
                         <table className="table table-striped table-hover mt-3 text-center shadow-sm rounded overflow-hidden">
                             <thead>
                                 <tr>
-                                    <th scope='col'>User ID</th>
-                                    <th scope='col'>Name</th>
+                                    <th scope='col'>Product ID</th>
+                                    <th scope='col'>Product Name</th>
                                     <th scope='col'>Email</th>
                                     <th scope='col'>Role</th>
                                     <th scope='col'>Actions</th>
@@ -210,7 +210,7 @@ function Products({ Toggle }) {
                     <div className="modal-dialog modal-dialog-centered">
                         <div className="modal-content">
                             <div className="modal-header">
-                                <h5 className="modal-title">{editMode ? 'Edit User' : 'Add User'}</h5>
+                                <h5 className="modal-title">{editMode ? 'Edit Product' : 'Add Product'}</h5>
                                 <button type="button" className="btn-close" onClick={handleCloseForm} aria-label="Close"></button>
                             </div>
                             <div className="modal-body d-flex justify-content-center align-items-center">

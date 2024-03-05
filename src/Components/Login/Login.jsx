@@ -1,8 +1,8 @@
 import './Login.css'
 import { useNavigate } from 'react-router-dom'
-import { sendPasswordResetEmail, signInWithEmailAndPassword } from 'firebase/auth'
+import { sendPasswordResetEmail, signInWithEmailAndPassword, getAuth, onAuthStateChanged } from 'firebase/auth'
 import { auth } from '../../firebaseConfig'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 function Login() {
   const navigate = useNavigate()
@@ -11,31 +11,59 @@ function Login() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false) 
+  const [isEmailVerified, setIsEmailVerified] = useState(true)
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        setIsEmailVerified(user.emailVerified)
+      }
+    })
+  
+    return () => {
+      unsubscribe()
+    }
+  }, [])
 
   const handleSubmit = async (e) => {
-    e.preventDefault()
-    setEmail(e.target.email.value)
-    setPassword(e.target.password.value)
-
+    e.preventDefault();
+    setEmail(e.target.email.value);
+    setPassword(e.target.password.value);
+  
     try {
-      setLoading(true) // Set loading to true during login process
-      await signInWithEmailAndPassword(auth, email, password)
-      navigate('/home')
+      setLoading(true);
+  
+      // Clear any cached or persisted sessions for the user
+      await auth.signOut();
+
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+  
+      await user.getIdToken(true);
+  
+      if (!user.emailVerified) {
+        setErrorMessage('Email not verified. Verify your email before logging in.');
+        setLoading(false);
+        return;
+      }
+
+      navigate('/home');
     } catch (error) {
-      console.error('Error signing in:', error.code)
-      let customErrorMessage = ''
+      console.error('Error signing in:', error);
+      let customErrorMessage = '';
       switch (error.code) {
         case 'auth/invalid-credential':
-          customErrorMessage = 'Invalid email or password.'
+          customErrorMessage = 'Invalid email or password.';
           break;
         default:
-          customErrorMessage = 'An error occurred. Please try again later.'
+          customErrorMessage = 'An error occurred. Please try again later.';
       }
-      setErrorMessage(customErrorMessage)
+      setErrorMessage(customErrorMessage);
     } finally {
-      setLoading(false) // Set loading back to false after login process
+      setLoading(false);
     }
   }
+  
 
   const [passwordVisible, setPasswordVisible] = useState(false)
 
