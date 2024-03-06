@@ -10,6 +10,7 @@ function Users({ Toggle }) {
     const [users, setUsers] = useState([])
     const [showForm, setShowForm] = useState(false)
     const [editMode, setEditMode] = useState(false)
+    const [loading, setLoading] = useState(true)
     const [editUserId, setEditUserId] = useState('')
     const [searchQuery, setSearchQuery] = useState('')
     const [formData, setFormData] = useState({
@@ -34,6 +35,9 @@ function Users({ Toggle }) {
                     })
                 })
                 setUsers(usersArray)
+                setLoading(false)
+            } else {
+                setLoading(false)
             }
         })
 
@@ -184,6 +188,14 @@ function Users({ Toggle }) {
         <div className='px-3'>
             <Nav Toggle={Toggle} pageTitle="Users"/>
             <section className="p-3">
+            {loading ? (
+                <div className="d-flex justify-content-center align-items-center" style={{ minHeight: '80vh' }}>
+                    <div className="spinner-border text-primary">
+                        <span className="visually-hidden">Loading...</span>
+                    </div>
+                </div>
+                 ) : (
+                <>
                 <div className="row d-flex">
                     <div className="col-6">
                         <button onClick={() => setShowForm(true)} className="btn btn-primary newUser" data-bs-toggle="modal" data-bs-target="#userForm">Add User</button>
@@ -232,6 +244,8 @@ function Users({ Toggle }) {
                         </table>
                     </div>
                 </div>
+                </>
+            )}
             </section>
 
             {showForm && (

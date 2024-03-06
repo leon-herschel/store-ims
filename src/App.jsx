@@ -4,6 +4,7 @@ import 'bootstrap-icons/font/bootstrap-icons.css'
 import Sidebar from './Sidebar'
 import Home from './Pages/Home'
 import Products from './Pages/Products'
+import Inventory from './Pages/Inventory'
 import Sales from './Pages/Sales'
 import Users from './Pages/Users'
 import Settings from './Pages/Settings'
@@ -46,6 +47,7 @@ function App() {
                 <Routes>
                   <Route path="/home" element={Private(<Home Toggle={handleToggle}/>)}></Route>
                   <Route path="/products" element={Private(<Products Toggle={handleToggle}/>)}></Route>
+                  <Route path="/inventory" element={Private(<Inventory Toggle={handleToggle}/>)}></Route>
                   <Route path="/sales" element={Private(<Sales Toggle={handleToggle}/>)}></Route>
                   <Route path="/users" element={Private(<Users Toggle={handleToggle}/>)}></Route>
                   <Route path="/settings" element={Private(<Settings Toggle={handleToggle}/>)}></Route>

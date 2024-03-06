@@ -33,6 +33,10 @@ function Sidebar() {
           <i className='bi bi-table fs-5 me-3'></i>
           <span className="d-none d-sm-inline">Products</span>
         </Link>
+        <Link to="/inventory" className={location.pathname === '/inventory' ? 'active list-group-item py-2 rounded' : 'list-group-item py-2 rounded'}>
+          <i className='bi bi-box-fill fs-5 me-3'></i>
+          <span className="d-none d-sm-inline">Inventory</span>
+        </Link>
         <Link to="/sales" className={location.pathname === '/sales' ? 'active list-group-item py-2 rounded' : 'list-group-item py-2 rounded'}>
           <i className='bi bi-receipt fs-5 me-3'></i>
           <span className="d-none d-sm-inline">Sales</span>
