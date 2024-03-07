@@ -5,7 +5,7 @@ const AuthContext = createContext()
 
 export const useAuth = () => {
   return useContext(AuthContext)
-};
+}
 
 const AuthProvider = ({ children }) => {
   const [currentUser, setCurrentUser] = useState(null)
@@ -15,7 +15,7 @@ const AuthProvider = ({ children }) => {
     const unsubscribe = onAuthStateChanged(getAuth(), (user) => {
       setCurrentUser(user)
       setLoading(false)
-    });
+    })
 
     return unsubscribe
   }, [])
@@ -24,18 +24,21 @@ const AuthProvider = ({ children }) => {
     <AuthContext.Provider value={{ currentUser, loading }}>
       {children}
     </AuthContext.Provider>
-  );
-};
+  )
+}
 
 const checkLoginSession = async () => {
   return new Promise((resolve, reject) => {
     const auth = getAuth();
     onAuthStateChanged(auth, (user) => {
       if (user) {
-        resolve(true)
+        resolve(true);
       } else {
-        resolve(false)
+        resolve(false);
       }
+    }, (error) => {
+      console.error('Error retrieving authentication state:', error)
+      reject(error) 
     })
   })
 }

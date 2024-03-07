@@ -43,7 +43,7 @@ function App() {
               {toggle && (
                 <div className='col-4 col-md-2'></div>
               )}
-              <div className={`col-${toggle ? '8' : '12'} col-md-${toggle ? '10' : '12'} px-${toggle ? '0' : '5'} overflow-auto`}>
+              <div className={`col-${toggle ? '8' : '12'} col-md-${toggle ? '10' : '12'} px-${toggle ? '0' : '5'} overflow-auto page-container`}>
                 <Routes>
                   <Route path="/home" element={Private(<Home Toggle={handleToggle}/>)}></Route>
                   <Route path="/products" element={Private(<Products Toggle={handleToggle}/>)}></Route>

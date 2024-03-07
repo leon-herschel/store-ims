@@ -1,6 +1,11 @@
 import './Login.css'
 import { useNavigate } from 'react-router-dom'
-import { sendPasswordResetEmail, signInWithEmailAndPassword, getAuth, onAuthStateChanged } from 'firebase/auth'
+import { 
+  sendPasswordResetEmail, 
+  signInWithEmailAndPassword, 
+  onAuthStateChanged, 
+  browserLocalPersistence 
+  } from 'firebase/auth'
 import { auth } from '../../firebaseConfig'
 import { useState, useEffect } from 'react'
 
@@ -26,41 +31,42 @@ function Login() {
   }, [])
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    setEmail(e.target.email.value);
-    setPassword(e.target.password.value);
+    e.preventDefault()
+    setEmail(e.target.email.value)
+    setPassword(e.target.password.value)
   
     try {
-      setLoading(true);
-  
-      // Clear any cached or persisted sessions for the user
-      await auth.signOut();
+      setLoading(true)
 
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      const user = userCredential.user;
+      await auth.signOut()
+
+      await auth.setPersistence(browserLocalPersistence)
+
+      const userCredential = await signInWithEmailAndPassword(auth, email, password)
+      const user = userCredential.user
   
-      await user.getIdToken(true);
+      await user.getIdToken(true)
   
       if (!user.emailVerified) {
-        setErrorMessage('Email not verified. Verify your email before logging in.');
-        setLoading(false);
-        return;
+        setErrorMessage('Email not verified. Verify your email before logging in.')
+        setLoading(false)
+        return
       }
 
-      navigate('/home');
+      navigate('/home')
     } catch (error) {
-      console.error('Error signing in:', error);
-      let customErrorMessage = '';
+      console.error('Error signing in:', error)
+      let customErrorMessage = ''
       switch (error.code) {
         case 'auth/invalid-credential':
-          customErrorMessage = 'Invalid email or password.';
+          customErrorMessage = 'Invalid email or password.'
           break;
         default:
-          customErrorMessage = 'An error occurred. Please try again later.';
+          customErrorMessage = 'An error occurred. Please try again later.'
       }
-      setErrorMessage(customErrorMessage);
+      setErrorMessage(customErrorMessage)
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
   }
   

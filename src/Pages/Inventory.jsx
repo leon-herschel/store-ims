@@ -46,8 +46,7 @@ function Inventory({ Toggle }) {
         try {
             const productRef = ref(db, `products/${editProductId}`)
             await update(productRef, {
-                quantity: editQuantity,
-                lastUpdatedTimestamp: new Date().toString()
+                quantity: editQuantity
             })
             setEditMode(false)
             setEditProductId('')
@@ -106,7 +105,6 @@ function Inventory({ Toggle }) {
                                     <th scope='col'>Product ID</th>
                                     <th scope='col'>Product Name</th>
                                     <th scope='col'>Quantity</th>
-                                    <th scope='col'>Last Updated</th>
                                     <th scope='col'>Actions</th>
                                 </tr>
                             </thead>
@@ -130,7 +128,6 @@ function Inventory({ Toggle }) {
                                             product.quantity
                                         )}
                                     </td>
-                                    <td>{product.lastUpdatedTimestamp}</td>
                                     <td>
                                         {editMode && editProductId === product.key ? (
                                             <>

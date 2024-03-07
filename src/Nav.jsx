@@ -1,8 +1,31 @@
 import 'bootstrap/js/dist/dropdown'
 import 'bootstrap/js/dist/collapse'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
+import { useAuth } from './Components/Login/AuthContext'
 
 function Nav({ Toggle, pageTitle }) {
+  const { currentUser } = useAuth()
+  const navigate = useNavigate()
+
+  const renderUserText = () => {
+    if (currentUser) {
+        return currentUser.email.split('@')[0]
+    } else {
+      return 'User'
+    }
+  }
+
+  const handleSignOut = () => {
+    auth.signOut()
+      .then(() => {
+        console.log('User signed out successfully')
+        navigate('/')
+      })
+      .catch((error) => {
+        console.error('Error signing out:', error)
+      })
+  }
+
   return (
     <nav className="navbar navbar-expand-sm navbar-dark bg-transparent">
       <i className="navbar-brand bi bi-justify-left fs-4" role="button" onClick={Toggle}></i>
@@ -26,11 +49,11 @@ function Nav({ Toggle, pageTitle }) {
               data-bs-toggle="dropdown"
               aria-haspopup="true"
               aria-expanded="false"
-            >User</Link>
+            > {renderUserText()}</Link>
             <div className="dropdown-menu dropdown-menu-end" aria-labelledby="dropdownId">
               <Link className="dropdown-item" to="#">Profile</Link>
               <Link className="dropdown-item" to="#">Setting</Link>
-              <Link className="dropdown-item" to="#">Logout</Link>
+              <Link className="dropdown-item" to="/" onClick={handleSignOut}>Logout</Link>
             </div>
           </li>
         </ul>
