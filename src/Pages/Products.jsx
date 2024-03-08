@@ -1,6 +1,6 @@
 import Nav from '../Nav'
 import { useState, useEffect } from 'react'
-import { ref, onValue, remove, push, update, serverTimestamp } from 'firebase/database'
+import { ref, onValue, remove, push, update, get, serverTimestamp } from 'firebase/database'
 import { db } from '../firebaseConfig'
 
 function Products({ Toggle }) {
@@ -43,19 +43,32 @@ function Products({ Toggle }) {
     }, [])
 
     const handleAdd = async (e) => {
-        e.preventDefault()
-      
+        e.preventDefault();
+    
         try {
             const productsRef = ref(db, 'products');
-      
-            await update(productsRef, {
-                [editMode ? editProductId : push(productsRef).key]: {
-                    name: formData.name,
-                    description: formData.description,
-                    unitPrice: formData.unitPrice,
-                    timeStamp: serverTimestamp()
+            let productData = {
+                name: formData.name,
+                description: formData.description,
+                unitPrice: formData.unitPrice,
+                timeStamp: serverTimestamp()
+            };
+    
+            if (editMode) {
+                const productSnapshot = await get(ref(db, `products/${editProductId}`));
+                if (productSnapshot.exists()) {
+                    const existingProductData = productSnapshot.val();
+                    productData = { ...productData, quantity: existingProductData.quantity };
+                } else {
+                    console.error("Product not found with ID:", editProductId);
+                    return;
                 }
+            }
+    
+            await update(productsRef, {
+                [editMode ? editProductId : push(productsRef).key]: productData
             });
+    
             setConfirmationMessage(editMode ? 'Product updated successfully.' : 'Product added successfully.')
             setEditMode(false)
             setEditProductId('')
@@ -70,6 +83,7 @@ function Products({ Toggle }) {
             console.error("Error adding/editing product: ", err)
         }
     }
+    
 
     const handleEdit = (id) => {
         setEditProductId(id)
@@ -98,7 +112,6 @@ function Products({ Toggle }) {
             setConfirmationMessage('Product deleted successfully.')
             console.log("Product with ID ", editProductId, " successfully deleted")
             
-            // Update the products state after deletion
             setProducts(prevProducts => prevProducts.filter(product => product.key !== editProductId))
         } catch (error) {
             setErrorMessage('Error deleting product.')
