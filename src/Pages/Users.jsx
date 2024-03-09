@@ -190,7 +190,7 @@ function Users({ Toggle }) {
             <section className="p-3">
             {loading ? (
                 <div className="d-flex justify-content-center align-items-center" style={{ minHeight: '80vh' }}>
-                    <div className="spinner-border text-primary">
+                    <div className="spinner-border text-light" style={{ width: '3rem', height: '3rem' }}>
                         <span className="visually-hidden">Loading...</span>
                     </div>
                 </div>

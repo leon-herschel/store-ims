@@ -20,45 +20,36 @@ function App() {
   const [toggle, setToggle] = useState(true)
 
   const handleToggle = () => {
-    try {
-      setToggle(!toggle)
-    } catch (error) {
-      console.error('Error toggling sidebar:', error)
-    }
+    setToggle(!toggle)
   }
 
   return (
     <BrowserRouter>
-    <AuthProvider>
-      <div className='container-fluid min-vh-100 main-container'>
-        <Routes>
-          <Route path="/" element={<Login />} /> 
-          <Route path="/*" element={
-            <div className="row">
-              {toggle && (
-                <div className="col-4 col-md-2 bg-white min-vh-100 position-fixed">
-                  <Sidebar/>
+      <AuthProvider>
+        <div className='container-fluid min-vh-100 main-container'>
+          <Routes>
+            <Route path="/" element={<Login />} /> 
+            <Route path="/*" element={
+              <div className="row">
+                <div className={`col-md-2 bg-white min-vh-100 position-fixed transition-all`} style={{ maxWidth: '225px', zIndex: '1000', transform: `translateX(${toggle ? '0' : '-100%'})`, transition: 'transform 0.2s ease-in-out' }}>
+                  {toggle && <Sidebar />}
                 </div>
-              )}
-              {toggle && (
-                <div className='col-4 col-md-2'></div>
-              )}
-              <div className={`col-${toggle ? '8' : '12'} col-md-${toggle ? '10' : '12'} px-${toggle ? '0' : '5'} overflow-auto page-container`}>
-                <Routes>
-                  <Route path="/home" element={Private(<Home Toggle={handleToggle}/>)}></Route>
-                  <Route path="/products" element={Private(<Products Toggle={handleToggle}/>)}></Route>
-                  <Route path="/inventory" element={Private(<Inventory Toggle={handleToggle}/>)}></Route>
-                  <Route path="/sales" element={Private(<Sales Toggle={handleToggle}/>)}></Route>
-                  <Route path="/users" element={Private(<Users Toggle={handleToggle}/>)}></Route>
-                  <Route path="/settings" element={Private(<Settings Toggle={handleToggle}/>)}></Route>
-                  <Route path="/reports" element={Private(<Reports Toggle={handleToggle}/>)}></Route>
-                  <Route path="*" element={Private(<PageNotFound/>)} />
-                </Routes>
+                <div className={`col-${toggle ? '10' : '12'} px-${toggle ? '0' : '5'} overflow-auto page-container`} style={{ marginLeft: toggle ? '225px' : '0', transition: 'margin-left 0.2s ease-in-out' }}>
+                  <Routes>
+                    <Route path="/home" element={Private(<Home Toggle={handleToggle}/>)}></Route>
+                    <Route path="/products" element={Private(<Products Toggle={handleToggle}/>)}></Route>
+                    <Route path="/inventory" element={Private(<Inventory Toggle={handleToggle}/>)}></Route>
+                    <Route path="/sales" element={Private(<Sales Toggle={handleToggle}/>)}></Route>
+                    <Route path="/users" element={Private(<Users Toggle={handleToggle}/>)}></Route>
+                    <Route path="/settings" element={Private(<Settings Toggle={handleToggle}/>)}></Route>
+                    <Route path="/reports" element={Private(<Reports Toggle={handleToggle}/>)}></Route>
+                    <Route path="*" element={Private(<PageNotFound/>)} />
+                  </Routes>
+                </div>
               </div>
-            </div>
-          } />
-        </Routes>
-      </div>
+            } />
+          </Routes>
+        </div>
       </AuthProvider>
     </BrowserRouter>
   )

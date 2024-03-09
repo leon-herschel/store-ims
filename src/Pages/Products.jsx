@@ -1,6 +1,6 @@
 import Nav from '../Nav'
 import { useState, useEffect } from 'react'
-import { ref, onValue, remove, push, update, get, serverTimestamp } from 'firebase/database'
+import { ref, onValue, remove, update, serverTimestamp } from 'firebase/database'
 import { db } from '../firebaseConfig'
 
 function Products({ Toggle }) {
@@ -13,8 +13,9 @@ function Products({ Toggle }) {
     const [formData, setFormData] = useState({
         name: '',
         description: '',
-        unitPrice: ''
-    });
+        unitPrice: '',
+        quantity: '' 
+    })
     const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false)
     const [confirmationMessage, setConfirmationMessage] = useState('')
     const [errorMessage, setErrorMessage] = useState('')
@@ -24,9 +25,9 @@ function Products({ Toggle }) {
         const unsubscribe = onValue(productsRef, (snapshot) => {
             if (snapshot.exists()) {
                 const productsArray = []
-                snapshot.forEach(childSnapshot => {
+                snapshot.forEach((childSnapshot) => {
                     productsArray.push({
-                        key: childSnapshot.key, 
+                        key: childSnapshot.key,
                         ...childSnapshot.val()
                     })
                 })
@@ -42,80 +43,85 @@ function Products({ Toggle }) {
         }
     }, [])
 
+    const generateProductKey = () => {
+        return Math.floor(1000 + Math.random() * 9000).toString()
+    }
+
     const handleAdd = async (e) => {
-        e.preventDefault();
+        e.preventDefault()
     
         try {
-            const productsRef = ref(db, 'products');
+            const productsRef = ref(db, 'products')
             let productData = {
                 name: formData.name,
                 description: formData.description,
                 unitPrice: formData.unitPrice,
+                quantity: formData.quantity,
                 timeStamp: serverTimestamp()
             };
     
             if (editMode) {
-                const productSnapshot = await get(ref(db, `products/${editProductId}`));
-                if (productSnapshot.exists()) {
-                    const existingProductData = productSnapshot.val();
-                    productData = { ...productData, quantity: existingProductData.quantity };
-                } else {
-                    console.error("Product not found with ID:", editProductId);
-                    return;
+                await update(ref(db, `products/${editProductId}`), productData);
+                setConfirmationMessage('Product updated successfully.');
+            } else {
+                let productKey = generateProductKey();
+                while (products.some((product) => product.key === productKey)) {
+                    productKey = generateProductKey();
                 }
+                await update(productsRef, {
+                    [productKey]: productData
+                });
+                setConfirmationMessage('Product added successfully.');
             }
     
-            await update(productsRef, {
-                [editMode ? editProductId : push(productsRef).key]: productData
-            });
-    
-            setConfirmationMessage(editMode ? 'Product updated successfully.' : 'Product added successfully.')
-            setEditMode(false)
-            setEditProductId('')
-            setShowForm(false)
+            setEditMode(false);
+            setEditProductId('');
+            setShowForm(false);
             setFormData({
                 name: '',
                 description: '',
-                unitPrice: ''
+                unitPrice: '',
+                quantity: 0
             });
         } catch (err) {
-            setErrorMessage('Error adding/editing product.')
-            console.error("Error adding/editing product: ", err)
+            setErrorMessage('Error adding/updating product.')
+            console.error('Error adding/updating product: ', err)
         }
     }
     
 
     const handleEdit = (id) => {
         setEditProductId(id)
-        const productToEdit = products.find(product => product.key === id)
+        const productToEdit = products.find((product) => product.key === id)
         if (productToEdit) {
             setFormData({
                 name: productToEdit.name,
                 description: productToEdit.description,
-                unitPrice: productToEdit.unitPrice
-            });
+                unitPrice: productToEdit.unitPrice,
+                quantity: productToEdit.quantity
+            })
             setEditMode(true)
             setShowForm(true)
         } else {
-            console.error("Product not found with ID:", id)
+            console.error('Product not found with ID:', id)
         }
     }
-    
+
     const handleDelete = (id) => {
-        setEditProductId(id); 
-        setShowDeleteConfirmation(true) 
+        setEditProductId(id)
+        setShowDeleteConfirmation(true)
     }
-    
+
     const confirmDelete = async () => {
         try {
             await remove(ref(db, 'products/' + editProductId))
             setConfirmationMessage('Product deleted successfully.')
-            console.log("Product with ID ", editProductId, " successfully deleted")
-            
-            setProducts(prevProducts => prevProducts.filter(product => product.key !== editProductId))
+            console.log('Product with ID ', editProductId, ' successfully deleted')
+
+            setProducts((prevProducts) => prevProducts.filter((product) => product.key !== editProductId))
         } catch (error) {
             setErrorMessage('Error deleting product.')
-            console.error("Error deleting product: ", error)
+            console.error('Error deleting product: ', error)
         } finally {
             setEditProductId('')
             setShowDeleteConfirmation(false)
@@ -126,7 +132,8 @@ function Products({ Toggle }) {
         setFormData({
             name: '',
             description: '',
-            unitPrice: ''
+            unitPrice: '',
+            quantity: 0
         })
         setEditMode(false)
         setEditProductId('')
@@ -164,64 +171,64 @@ function Products({ Toggle }) {
         <div className='px-3'>
             <Nav Toggle={Toggle} pageTitle="Products"/>
             <section className="p-3">
-            {loading ? (
-                <div className="d-flex justify-content-center align-items-center" style={{ minHeight: '80vh' }}>
-                    <div className="spinner-border text-primary">
-                        <span className="visually-hidden">Loading...</span>
+                {loading ? (
+                    <div className="d-flex justify-content-center align-items-center" style={{ minHeight: '80vh' }}>
+                        <div className="spinner-border text-light" style={{ width: '3rem', height: '3rem' }}>
+                            <span className="visually-hidden">Loading...</span>
+                        </div>
                     </div>
-                </div>
-                 ) : (
-                <>
-                <div className="row d-flex">
-                    <div className="col-6">
-                        <button onClick={() => setShowForm(true)} className="btn btn-primary newUser" data-bs-toggle="modal" data-bs-target="#productForm">Add Product</button>
-                    </div>
-                    <div className="col-6 d-flex justify-content-end">
-                        <div className="w-50">
-                        <input 
-                            type="text" 
-                            className="form-control me-2" 
-                            placeholder="Search" 
-                            value={searchQuery} 
-                            onChange={handleSearchChange} 
-                        />
-                    </div>
-                </div>
-                </div>
-                <div className="row">
-                    <div className="col-12">
-                        <table className="table  table-striped table-hover mt-3 text-center shadow-sm rounded overflow-hidden">
-                            <thead>
-                                <tr>
-                                    <th scope='col'>Product ID</th>
-                                    <th scope='col'>Product Name</th>
-                                    <th scope='col'>Description</th>
-                                    <th scope='col'>Unit Price</th>
-                                    <th scope='col'>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody className='table-striped'>
-                            {products.filter(product => {
-                                const productDataString = Object.values(product).join(' ').toLowerCase();
-                                return productDataString.includes(searchQuery.toLowerCase());
-                                }).map(product => (
-                                    <tr key={product.key}>
-                                        <td>{product.key}</td>
-                                        <td>{product.name}</td>
-                                        <td>{product.description}</td>
-                                        <td>{product.unitPrice}</td>
-                                        <td>
-                                            <button onClick={() => handleEdit(product.key)} className="btn btn-success me-2">Edit</button>
-                                            <button onClick={() => handleDelete(product.key)} className="btn btn-danger">Delete</button>
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-                </>
-                )}
+                ) : (
+                    <>
+                        <div className="row d-flex">
+                            <div className="col-6">
+                                <button onClick={() => setShowForm(true)} className="btn btn-primary newUser" data-bs-toggle="modal" data-bs-target="#productForm">Add Product</button>
+                            </div>
+                            <div className="col-6 d-flex justify-content-end">
+                                <div className="w-50">
+                                <input 
+                                    type="text" 
+                                    className="form-control me-2" 
+                                    placeholder="Search" 
+                                    value={searchQuery} 
+                                    onChange={handleSearchChange} 
+                                />
+                            </div>
+                        </div>
+                        </div>
+                        <div className="row">
+                            <div className="col-12">
+                                <table className="table  table-striped table-hover mt-3 text-center shadow-sm rounded overflow-hidden">
+                                    <thead>
+                                        <tr>
+                                            <th scope='col'>Product ID</th>
+                                            <th scope='col'>Product Name</th>
+                                            <th scope='col'>Description</th>
+                                            <th scope='col'>Unit Price</th>
+                                            <th scope='col'>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className='table-striped'>
+                                    {products.filter(product => {
+                                        const productDataString = Object.values(product).join(' ').toLowerCase();
+                                        return productDataString.includes(searchQuery.toLowerCase());
+                                        }).map(product => (
+                                            <tr key={product.key}>
+                                                <td>{product.key}</td>
+                                                <td>{product.name}</td>
+                                                <td>{product.description}</td>
+                                                <td>{product.unitPrice}</td>
+                                                <td>
+                                                    <button onClick={() => handleEdit(product.key)} className="btn btn-success me-2">Edit</button>
+                                                    <button onClick={() => handleDelete(product.key)} className="btn btn-danger">Delete</button>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </>
+                    )}
             </section>
 
             {showForm && (
@@ -237,6 +244,8 @@ function Products({ Toggle }) {
                                     <input type="text" name="name" value={formData.name} onChange={handleChange} className="form-control mb-3" placeholder="Name" required />
                                     <input type="text" name="description" value={formData.description} onChange={handleChange} className="form-control mb-3" placeholder="Description" required />
                                     <input type="number" name="unitPrice" value={formData.unitPrice} onChange={handleChange} className="form-control mb-3" placeholder="Unit Price" required />
+                                    {!editMode && <input type="number" name="quantity" value={formData.quantity} onChange={handleChange} className="form-control mb-3" placeholder="Quantity" required />}
+                                    {editMode && <input type="hidden" name="quantity" value={formData.quantity} />}
                                     <div className="d-grid my-3 shadow">
                                         <button type="submit" className="btn btn-primary login-btn">{editMode ? 'Update' : 'Submit'}</button>
                                     </div>
@@ -285,4 +294,3 @@ function Products({ Toggle }) {
 }
 
 export default Products
-

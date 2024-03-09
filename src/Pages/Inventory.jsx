@@ -35,6 +35,21 @@ function Inventory({ Toggle }) {
         fetchProducts()
     }, [])
 
+    useEffect(() => {
+        const confirmationTimeout = setTimeout(() => {
+            setConfirmationMessage('')
+        }, 3000)
+
+        const errorTimeout = setTimeout(() => {
+            setErrorMessage('')
+        }, 3000)
+
+        return () => {
+            clearTimeout(confirmationTimeout)
+            clearTimeout(errorTimeout)
+        }
+    }, [confirmationMessage, errorMessage])
+
     const handleEdit = (id, quantity) => {
         setEditProductId(id)
         setEditQuantity(quantity)
@@ -93,7 +108,7 @@ function Inventory({ Toggle }) {
             <section className="p-3">
                 {loading ? (
                     <div className="d-flex justify-content-center align-items-center" style={{ minHeight: '80vh' }}>
-                        <div className="spinner-border text-primary">
+                        <div className="spinner-border text-light" style={{ width: '3rem', height: '3rem' }}>
                             <span className="visually-hidden">Loading...</span>
                         </div>
                     </div>
@@ -150,11 +165,11 @@ function Inventory({ Toggle }) {
                                                 <td>
                                                     {editMode && editProductId === product.key ? (
                                                         <>
-                                                            <button onClick={confirmEdit} className="btn btn-success me-2">Save</button>
+                                                            <button onClick={confirmEdit} className="btn btn-primary me-2">Save</button>
                                                             <button onClick={handleCloseEdit} className="btn btn-secondary">Cancel</button>
                                                         </>
                                                     ) : (
-                                                        <button onClick={() => handleEdit(product.key, product.quantity)} className="btn btn-primary">Edit Quantity</button>
+                                                        <button onClick={() => handleEdit(product.key, product.quantity)} className="btn btn-success">Edit Quantity</button>
                                                     )}
                                                 </td>
                                             </tr>
