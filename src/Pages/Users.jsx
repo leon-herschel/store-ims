@@ -2,8 +2,7 @@ import Nav from '../Nav'
 import { useState, useEffect } from 'react'
 import { ref, serverTimestamp, remove, update, onValue } from 'firebase/database'
 import { createUserWithEmailAndPassword, sendEmailVerification } from 'firebase/auth'
-import { auth } from '../firebaseConfig'
-import { db } from '../firebaseConfig'
+import { auth, db } from '../firebaseConfig'
 import { deleteUser } from 'firebase/auth'
 
 function Users({ Toggle }) {
@@ -111,33 +110,24 @@ function Users({ Toggle }) {
     }
     
     const handleDelete = (id) => {
-        setEditUserId(id); 
+        setEditUserId(id)
         setShowDeleteConfirmation(true) 
     }
     
     const confirmDelete = async () => {
         try {
-            const userToDeleteId = editUserId; // Get the ID of the user to delete
-    
-            // Retrieve the user's email from the database
-            const userToDeleteEmail = users.find(user => user.key === userToDeleteId).email;
-    
-            // Delete the user from authentication
-            await deleteUser(auth, userToDeleteEmail);
-    
-            // Delete the user from the database
-            await remove(ref(db, 'users/' + userToDeleteId));
-    
-            setConfirmationMessage('User deleted successfully.');
-            console.log("User with ID ", userToDeleteId, " successfully deleted");
+            const userToDeleteId = editUserId;
+            await remove(ref(db, 'users/' + userToDeleteId))
+            setConfirmationMessage('User data deleted successfully.')
+            console.log("User with ID ", userToDeleteId, " successfully deleted")
         } catch (error) {
-            setErrorMessage('Error deleting user.');
-            console.error("Error deleting user: ", error);
+            setErrorMessage('Error deleting user data.')
+            console.error("Error deleting user data: ", error)
         } finally {
-            setEditUserId('');
-            setShowDeleteConfirmation(false);
+            setEditUserId('')
+            setShowDeleteConfirmation(false)
         }
-    };
+    }
 
     const handleCloseForm = () => {
         setFormData({

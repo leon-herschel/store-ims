@@ -4,26 +4,42 @@ import PieChart from '../Components/Charts/PieChart'
 import Nav from '../Nav'
 import { db } from '../firebaseConfig'
 import { ref, onValue } from 'firebase/database'
+import { useNavigate } from 'react-router-dom'
 
 function Home({ Toggle }) {
     const [productsCount, setProductsCount] = useState(0)
+    const [products, setProducts] = useState([])
     const [loading, setLoading] = useState(true)
+    const navigate = useNavigate()
 
     useEffect(() => {
         const productsRef = ref(db, 'products')
         const unsubscribe = onValue(productsRef, (snapshot) => {
             if (snapshot.exists()) {
                 const productsData = snapshot.val()
-                const productsCount = Object.keys(productsData).length
-                setProductsCount(productsCount)
+                const productsArray = Object.entries(productsData).map(([key, value]) => ({
+                    key,
+                    ...value
+                }))
+                setProducts(productsArray.slice(0, 3))
+                setProductsCount(Object.keys(productsData).length) // Update productsCount
             }
             setLoading(false)
         })
-
+    
         return () => {
             unsubscribe()
         }
     }, [])
+
+    const calculateTotalValue = (product) => {
+        const matchingProduct = products.find((p) => p.key === product.key)
+        if (matchingProduct) {
+            return matchingProduct.unitPrice * product.quantity
+        }
+        return 0
+    }
+
 
     return (
         <div className='px-3'>
@@ -75,35 +91,25 @@ function Home({ Toggle }) {
                         </div>
                     </div>
                     <div className='row m-2'>
-                        <table class="table caption-top shadow-sm rounded overflow-hidden bg-white">
+                        <table className="table caption-top table-striped table-hover mt-3 text-center shadow-sm rounded overflow-hidden">
                             <caption className="text-white fs-4">Inventory</caption>
                             <thead>
                                 <tr>
-                                    <th scope="col">Item ID</th>
+                                    <th scope="col">Product ID</th>
                                     <th scope="col">Name</th>
                                     <th scope="col">Quantity</th>
-                                    <th scope="col">Description</th>
+                                    <th scope="col">Total Value</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr>
-                                    <th scope="row">1</th>
-                                    <td>Hooks</td>
-                                    <td>30</td>
-                                    <td>boxes</td>
-                                </tr>
-                                <tr>
-                                    <th scope="row">2</th>
-                                    <td>Fishing Line</td>
-                                    <td>50</td>
-                                    <td>carbon fiber</td>
-                                </tr>
-                                <tr>
-                                    <th scope="row">3</th>
-                                    <td>Fishing Rod</td>
-                                    <td>5</td>
-                                    <td>daiwa</td>
-                                </tr>
+                                {products.map(product => (
+                                     <tr key={product.key} onClick={() => navigate("/inventory")}>
+                                        <th scope="row">{product.key}</th>
+                                        <td>{product.name}</td>
+                                        <td>{product.quantity}</td>
+                                        <td>{calculateTotalValue(product)}</td>
+                                    </tr>
+                                ))}
                             </tbody>
                         </table>
                     </div>

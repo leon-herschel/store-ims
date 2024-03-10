@@ -197,7 +197,7 @@ function Products({ Toggle }) {
                         </div>
                         <div className="row">
                             <div className="col-12">
-                                <table className="table  table-striped table-hover mt-3 text-center shadow-sm rounded overflow-hidden">
+                                <table className="table table-striped table-hover mt-3 text-center shadow-sm rounded overflow-hidden">
                                     <thead>
                                         <tr>
                                             <th scope='col'>Product ID</th>

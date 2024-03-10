@@ -21,7 +21,7 @@ function Sidebar() {
   return (
     <div className='bg-white p-2'>
       <div className='pt-2'>
-        <img src={logo} alt="Carlos Fishing Supplies" className="p-0 fs-2 store-logo img-fluid" />
+        <img src={logo} alt="CFS" className="p-0 fs-2 store-logo img-fluid" />
       </div>
       <hr className='text-dark'/>
       <div className='list-group list-group-flush'>
