@@ -170,6 +170,18 @@ function Products({ Toggle }) {
     return (
         <div className='px-3'>
             <Nav Toggle={Toggle} pageTitle="Products"/>
+            <div className='px-3 position-relative'>
+                {confirmationMessage && (
+                    <div className="alert alert-success position-absolute top-0 start-50 translate-middle" role="alert">
+                        {confirmationMessage}
+                    </div>
+                )}
+                {errorMessage && (
+                    <div className="alert alert-danger position-absolute top-0 start-50 translate-middle" role="alert">
+                        {errorMessage}
+                    </div>
+                )}
+            </div>
             <section className="p-3">
                 {loading ? (
                     <div className="d-flex justify-content-center align-items-center" style={{ minHeight: '80vh' }}>
@@ -185,15 +197,15 @@ function Products({ Toggle }) {
                             </div>
                             <div className="col-6 d-flex justify-content-end">
                                 <div className="w-50">
-                                <input 
-                                    type="text" 
-                                    className="form-control me-2" 
-                                    placeholder="Search" 
-                                    value={searchQuery} 
-                                    onChange={handleSearchChange} 
-                                />
+                                    <input 
+                                        type="text" 
+                                        className="form-control me-2" 
+                                        placeholder="Search" 
+                                        value={searchQuery} 
+                                        onChange={handleSearchChange} 
+                                    />
+                                </div>
                             </div>
-                        </div>
                         </div>
                         <div className="row">
                             <div className="col-12">
@@ -276,19 +288,6 @@ function Products({ Toggle }) {
                     </div>
                 </div>
             )}
-            <div className='px-3'>
-                {confirmationMessage && (
-                    <div className="alert alert-success" role="alert">
-                        {confirmationMessage}
-                    </div>
-                )}
-
-                {errorMessage && (
-                    <div className="alert alert-danger" role="alert">
-                        {errorMessage}
-                    </div>
-                )}
-            </div>
         </div>
     )
 }

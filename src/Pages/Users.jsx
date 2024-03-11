@@ -3,7 +3,6 @@ import { useState, useEffect } from 'react'
 import { ref, serverTimestamp, remove, update, onValue } from 'firebase/database'
 import { createUserWithEmailAndPassword, sendEmailVerification } from 'firebase/auth'
 import { auth, db } from '../firebaseConfig'
-import { deleteUser } from 'firebase/auth'
 
 function Users({ Toggle }) {
     const [users, setUsers] = useState([])
@@ -86,8 +85,14 @@ function Users({ Toggle }) {
                 password: ''
             });
         } catch (err) {
-            setErrorMessage('Error adding/editing user.')
-            console.error("Error adding/editing user: ", err)
+            if (err.code === 'auth/email-already-in-use') {
+                setErrorMessage('Email is already in use.')
+            } else if (err.code === 'auth/weak-password') {
+                setErrorMessage('Password should be at least 6 characters.')
+            } else {
+                setErrorMessage('Error adding/editing user.')
+                console.error("Error adding/editing user: ", err)
+            }
         }
     }
     
@@ -177,6 +182,18 @@ function Users({ Toggle }) {
     return (
         <div className='px-3'>
             <Nav Toggle={Toggle} pageTitle="Users"/>
+            <div className='px-3 position-relative'>
+                {confirmationMessage && (
+                    <div className="alert alert-success position-absolute top-0 start-50 translate-middle" role="alert">
+                        {confirmationMessage}
+                    </div>
+                )}
+                {errorMessage && (
+                    <div className="alert alert-danger position-absolute top-0 start-50 translate-middle" role="alert">
+                        {errorMessage}
+                    </div>
+                )}
+            </div>
             <section className="p-3">
             {loading ? (
                 <div className="d-flex justify-content-center align-items-center" style={{ minHeight: '80vh' }}>
@@ -309,19 +326,6 @@ function Users({ Toggle }) {
                     </div>
                 </div>
             )}
-            <div className='px-3'>
-                {confirmationMessage && (
-                    <div className="alert alert-success" role="alert">
-                        {confirmationMessage}
-                    </div>
-                )}
-
-                {errorMessage && (
-                    <div className="alert alert-danger" role="alert">
-                        {errorMessage}
-                    </div>
-                )}
-            </div>
         </div>
     )
 }

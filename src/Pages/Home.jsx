@@ -8,6 +8,8 @@ import { useNavigate } from 'react-router-dom'
 
 function Home({ Toggle }) {
     const [productsCount, setProductsCount] = useState(0)
+    const [lowStockCount, setLowStockCount] = useState(0)
+    const [outOfStockCount, setOutOfStockCount] = useState(0)
     const [products, setProducts] = useState([])
     const [loading, setLoading] = useState(true)
     const navigate = useNavigate()
@@ -21,8 +23,21 @@ function Home({ Toggle }) {
                     key,
                     ...value
                 }))
-                setProducts(productsArray.slice(0, 3))
-                setProductsCount(Object.keys(productsData).length) // Update productsCount
+                setProducts(productsArray.slice(0, 4))
+                setProductsCount(Object.keys(productsData).length) 
+
+                let lowStock = 0
+                let outOfStock = 0
+                productsArray.forEach(product => {
+                    if (product.quantity < 5 && product.quantity != 0) {
+                        lowStock++
+                    }
+                    if (product.quantity == 0) {
+                        outOfStock++
+                    }
+                })
+                setLowStockCount(lowStock)
+                setOutOfStockCount(outOfStock)
             }
             setLoading(false)
         })
@@ -39,7 +54,6 @@ function Home({ Toggle }) {
         }
         return 0
     }
-
 
     return (
         <div className='px-3'>
@@ -65,7 +79,7 @@ function Home({ Toggle }) {
                         <div className="col-md-3 p-1">
                             <div className="p-3 bg-white shadow-sm d-flex justify-content-around align-items-center rounded">
                                 <div>
-                                    <h3 className='fs-2'>1</h3>
+                                    <h3 className='fs-2'>{lowStockCount}</h3>
                                     <p className='fs-5'>Low stock</p>
                                 </div>
                                 <i className="bi bi-cart-dash p-3 fs-1"></i>
@@ -74,7 +88,7 @@ function Home({ Toggle }) {
                         <div className="col-md-3 p-1">
                             <div className="p-3 bg-white shadow-sm d-flex justify-content-around align-items-center rounded">
                                 <div>
-                                    <h3 className='fs-2'>0</h3>
+                                    <h3 className='fs-2'>{outOfStockCount}</h3>
                                     <p className='fs-5'>Out of Stock</p>
                                 </div>
                                 <i className="bi bi-cart-x p-3 fs-1"></i>
@@ -96,7 +110,7 @@ function Home({ Toggle }) {
                             <thead>
                                 <tr>
                                     <th scope="col">Product ID</th>
-                                    <th scope="col">Name</th>
+                                    <th scope="col">Product Name</th>
                                     <th scope="col">Quantity</th>
                                     <th scope="col">Total Value</th>
                                 </tr>
@@ -110,6 +124,13 @@ function Home({ Toggle }) {
                                         <td>{calculateTotalValue(product)}</td>
                                     </tr>
                                 ))}
+                                <tr>
+                                    <td colSpan="4" className="text-center p-0">
+                                        <button className="btn" onClick={() => navigate("/inventory")}>
+                                            Show More
+                                        </button>
+                                    </td>
+                                </tr>
                             </tbody>
                         </table>
                     </div>
@@ -123,7 +144,7 @@ function Home({ Toggle }) {
                     </div>
                 </div>
             )}
-            </div>
+        </div>
     )
 }
 

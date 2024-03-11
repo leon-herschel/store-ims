@@ -12,6 +12,8 @@ function Inventory({ Toggle }) {
     const [searchQuery, setSearchQuery] = useState('')
     const [confirmationMessage, setConfirmationMessage] = useState('')
     const [errorMessage, setErrorMessage] = useState('')
+    const [lowStockCount, setLowStockCount] = useState(0)
+    const [outOfStockCount, setOutOfStockCount] = useState(0)
 
     useEffect(() => {
         const fetchProducts = async () => {
@@ -25,6 +27,7 @@ function Inventory({ Toggle }) {
                         ...value
                     }))
                     setProducts(productsArray)
+                    updateStockCounts(productsArray)
                 }
             } catch (error) {
                 console.error('Error fetching products:', error)
@@ -34,6 +37,21 @@ function Inventory({ Toggle }) {
         }
         fetchProducts()
     }, [])
+
+    const updateStockCounts = (productsArray) => {
+        let lowStock = 0
+        let outOfStock = 0
+        productsArray.forEach(product => {
+            if (product.quantity < 5 && product.quantity != 0) {
+                lowStock++
+            }
+            if (product.quantity == 0) {
+                outOfStock++
+            }
+        })
+        setLowStockCount(lowStock)
+        setOutOfStockCount(outOfStock)
+    }
 
     useEffect(() => {
         const confirmationTimeout = setTimeout(() => {
@@ -74,6 +92,7 @@ function Inventory({ Toggle }) {
                 return product
             })
             setProducts(updatedProducts)
+            updateStockCounts(updatedProducts)
         } catch (error) {
             setErrorMessage('Error updating quantity.')
             console.error("Error updating quantity: ", error)
@@ -105,6 +124,18 @@ function Inventory({ Toggle }) {
     return (
         <div className='px-3'>
             <Nav Toggle={Toggle} pageTitle="Inventory"/>
+            <div className='px-3 position-relative'>
+                {confirmationMessage && (
+                    <div className="alert alert-success position-absolute top-0 start-50 translate-middle" role="alert">
+                        {confirmationMessage}
+                    </div>
+                )}
+                {errorMessage && (
+                    <div className="alert alert-danger position-absolute top-0 start-50 translate-middle" role="alert">
+                        {errorMessage}
+                    </div>
+                )}
+            </div>
             <section className="p-3">
                 {loading ? (
                     <div className="d-flex justify-content-center align-items-center" style={{ minHeight: '80vh' }}>
@@ -115,14 +146,24 @@ function Inventory({ Toggle }) {
                 ) : (
                     <>
                         <div className="row d-flex">
-                            <div className="col-6 d-flex">
+                        <div className="col-6 d-flex justify-content-start">
+                                <div className="me-3">
+                                    <span className="me-1 text-light fs-4">{lowStockCount}</span>
+                                    <i className="bi bi-cart-dash text-warning fs-4"></i>
+                                </div>
+                                <div>
+                                    <span className="me-1 text-light fs-4">{outOfStockCount}</span>
+                                    <i className="bi bi-cart-x text-danger fs-4"></i>
+                                </div>
+                            </div>
+                            <div className="col-6 d-flex justify-content-end">
                                 <div className="w-50">
-                                    <input
-                                        type="text"
-                                        className="form-control me-2"
-                                        placeholder="Search"
-                                        value={searchQuery}
-                                        onChange={handleSearchChange}
+                                    <input 
+                                        type="text" 
+                                        className="form-control me-2" 
+                                        placeholder="Search" 
+                                        value={searchQuery} 
+                                        onChange={handleSearchChange} 
                                     />
                                 </div>
                             </div>
@@ -145,7 +186,21 @@ function Inventory({ Toggle }) {
                                             return productDataString.includes(searchQuery.toLowerCase());
                                         }).map(product => (
                                             <tr key={product.key}>
-                                                <td>{product.key}</td>
+                                                <td>
+                                                    <div className="d-flex align-items-center">
+                                                        <div className="me-auto">
+                                                            {product.quantity < 5 && product.quantity != 0 && (
+                                                                <i className="bi bi-exclamation-triangle-fill text-warning fs-5 icon-inv"></i>
+                                                            )}
+                                                            {product.quantity == 0 && (
+                                                                <i className="bi bi-exclamation-triangle-fill text-danger fs-5 icon-inv"></i>
+                                                            )}
+                                                        </div>
+                                                        <div className="pe-5">
+                                                            {product.key}
+                                                        </div>
+                                                    </div>
+                                                </td>
                                                 <td>{product.name}</td>
                                                 <td>
                                                     {editMode && editProductId === product.key ? (
@@ -153,7 +208,8 @@ function Inventory({ Toggle }) {
                                                             type="number"
                                                             value={editQuantity}
                                                             onChange={handleQuantityChange}
-                                                            className="form-control"
+                                                            className="form-control w-50 mx-auto"
+                                                            min="0"
                                                         />
                                                     ) : (
                                                         product.quantity
@@ -181,19 +237,6 @@ function Inventory({ Toggle }) {
                     </>
                 )}
             </section>
-
-            <div className='px-3'>
-                {confirmationMessage && (
-                    <div className="alert alert-success" role="alert">
-                        {confirmationMessage}
-                    </div>
-                )}
-                {errorMessage && (
-                    <div className="alert alert-danger" role="alert">
-                        {errorMessage}
-                    </div>
-                )}
-            </div>
         </div>
     )
 }
