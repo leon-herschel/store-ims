@@ -4,7 +4,7 @@ import PieChart from '../Components/Charts/PieChart'
 import Nav from '../Nav'
 import { db } from '../firebaseConfig'
 import { ref, onValue } from 'firebase/database'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 
 function Home({ Toggle }) {
     const [productsCount, setProductsCount] = useState(0)
@@ -66,42 +66,50 @@ function Home({ Toggle }) {
                 </div>
             ) : (
                 <div className="container-fluid">
-                    <div className="row g-1 m-2 ">
-                        <div className="col-md-3 p-1">
-                            <div className="p-3 bg-white shadow-sm d-flex justify-content-around align-items-center rounded">
-                                <div>
-                                    <h3 className='fs-2'>{productsCount}</h3>
-                                    <p className='fs-5'>Products</p>
+                    <div className="row g-1 m-1">
+                        <div className="col-md-3 py-1 px-2 shadow-sm">
+                            <Link to="/products" className="text-decoration-none text-dark">
+                                <div className="p-3 bg-white d-flex justify-content-around align-items-center rounded zoom-on">
+                                    <div>
+                                        <h3 className='fs-2'>{productsCount}</h3>
+                                        <p className='fs-5'>Products</p>
+                                    </div>
+                                    <i className="bi bi-cart-plus p-3 fs-1"></i>
                                 </div>
-                                <i className="bi bi-cart-plus p-3 fs-1"></i>
-                            </div>
+                            </Link>
                         </div>
-                        <div className="col-md-3 p-1">
-                            <div className="p-3 bg-white shadow-sm d-flex justify-content-around align-items-center rounded">
-                                <div>
-                                    <h3 className='fs-2'>{lowStockCount}</h3>
-                                    <p className='fs-5'>Low stock</p>
+                        <div className="col-md-3 py-1 px-2 shadow-sm">
+                            <Link to="/inventory" className="text-decoration-none text-dark">
+                                <div className="p-3 bg-white d-flex justify-content-around align-items-center rounded zoom-on">
+                                    <div>
+                                        <h3 className='fs-2'>{lowStockCount}</h3>
+                                        <p className='fs-5'>Low stock</p>
+                                    </div>
+                                    <i className="bi bi-cart-dash p-3 fs-1"></i>
                                 </div>
-                                <i className="bi bi-cart-dash p-3 fs-1"></i>
-                            </div>
+                            </Link>
                         </div>
-                        <div className="col-md-3 p-1">
-                            <div className="p-3 bg-white shadow-sm d-flex justify-content-around align-items-center rounded">
-                                <div>
-                                    <h3 className='fs-2'>{outOfStockCount}</h3>
-                                    <p className='fs-5'>Out of Stock</p>
+                        <div className="col-md-3 py-1 px-2 shadow-sm">
+                            <Link to="/inventory" className="text-decoration-none text-dark">
+                                <div className="p-3 bg-white d-flex justify-content-around align-items-center rounded zoom-on">
+                                    <div>
+                                        <h3 className='fs-2'>{outOfStockCount}</h3>
+                                        <p className='fs-5'>Out of Stock</p>
+                                    </div>
+                                    <i className="bi bi-cart-x p-3 fs-1"></i>
                                 </div>
-                                <i className="bi bi-cart-x p-3 fs-1"></i>
-                            </div>
+                            </Link>
                         </div>
-                        <div className="col-md-3 p-1">
-                            <div className="p-3 bg-white shadow-sm d-flex justify-content-around align-items-center rounded">
-                                <div>
-                                    <h3 className='fs-2'>40</h3>
-                                    <p className='fs-5'>Sales</p>
+                        <div className="col-md-3 py-1 px-2 shadow-sm">
+                            <Link to="/sales" className="text-decoration-none text-dark">
+                                <div className="p-3 bg-white d-flex justify-content-around align-items-center rounded zoom-on">
+                                    <div>
+                                        <h3 className='fs-2'>40</h3>
+                                        <p className='fs-5'>Sales</p>
+                                    </div>
+                                    <i className="bi bi-receipt p-3 fs-1"></i>
                                 </div>
-                                <i className="bi bi-receipt p-3 fs-1"></i>
-                            </div>
+                            </Link>
                         </div>
                     </div>
                     <div className='row m-2'>

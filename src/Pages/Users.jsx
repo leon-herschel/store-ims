@@ -1,10 +1,12 @@
 import Nav from '../Nav'
 import { useState, useEffect } from 'react'
 import { ref, serverTimestamp, remove, update, onValue } from 'firebase/database'
-import { createUserWithEmailAndPassword, sendEmailVerification } from 'firebase/auth'
+import { createUserWithEmailAndPassword, sendEmailVerification, signOut } from 'firebase/auth'
 import { auth, db } from '../firebaseConfig'
+import { useNavigate } from 'react-router-dom'
 
 function Users({ Toggle }) {
+    const navigate = useNavigate()
     const [users, setUsers] = useState([])
     const [showForm, setShowForm] = useState(false)
     const [editMode, setEditMode] = useState(false)
@@ -48,24 +50,24 @@ function Users({ Toggle }) {
         e.preventDefault();
         
         try {
-            const { email, password } = formData;
-            const usersRef = ref(db, 'users');
+            const { email, password } = formData
+            const usersRef = ref(db, 'users')
     
             if (editMode) {
                 await update(ref(db, `users/${editUserId}`), {
                     name: formData.name,
                     access: formData.access,
                     timeStamp: serverTimestamp()
-                });
+                })
                 setConfirmationMessage('User updated successfully.')
             } else {
                 const userCredential = await createUserWithEmailAndPassword(auth, email, password)
-                const user = userCredential.user
-                
-                await sendEmailVerification(user)
-    
+                const newUser = userCredential.user
+                    
+                await sendEmailVerification(newUser)
+        
                 await update(usersRef, {
-                    [user.uid]: {
+                    [newUser.uid]: {
                         name: formData.name,
                         email: formData.email,
                         access: formData.access,
@@ -73,8 +75,12 @@ function Users({ Toggle }) {
                     }
                 });
                 setConfirmationMessage('User added successfully. Verification email sent.')
+                setTimeout(async () => {
+                    await signOut(auth)
+                    navigate('/')
+                }, 1000)
             }
-    
+        
             setEditMode(false)
             setEditUserId('')
             setShowForm(false)
@@ -299,7 +305,7 @@ function Users({ Toggle }) {
                                     <div className="d-grid my-3 shadow">
                                         <button type="submit" className="btn btn-primary login-btn">{editMode ? 'Update' : 'Submit'}</button>
                                     </div>
-                                    
+                                    <small className={`text-muted ${editMode ? 'd-none' : 'd-flex justify-content-center'}`}>* You will be logged out upon submission.</small>
                                 </form>
                             </div>
                         </div>

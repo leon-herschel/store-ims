@@ -28,7 +28,7 @@ function Nav({ Toggle, pageTitle }) {
 
   return (
     <nav className="navbar navbar-expand-sm navbar-dark bg-transparent">
-      <i className="navbar-brand bi bi-justify fs-4" role="button" onClick={Toggle}></i>
+      <i className="navbar-brand bi bi-justify fs-4 zoom-on" role="button" onClick={Toggle}></i>
       <span className='fs-5 text-white'>{pageTitle}</span>
       <button
         className="navbar-toggler d-lg-none"

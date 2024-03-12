@@ -149,11 +149,11 @@ function Inventory({ Toggle }) {
                         <div className="col-6 d-flex justify-content-start">
                                 <div className="me-3">
                                     <span className="me-1 text-light fs-4">{lowStockCount}</span>
-                                    <i className="bi bi-cart-dash text-warning fs-4"></i>
+                                    <i className="bi bi-cart-dash text-warning fs-4" data-bs-toggle="tooltip" data-bs-placement="top" title="Low stock"></i>
                                 </div>
                                 <div>
                                     <span className="me-1 text-light fs-4">{outOfStockCount}</span>
-                                    <i className="bi bi-cart-x text-danger fs-4"></i>
+                                    <i className="bi bi-cart-x text-danger fs-4" data-bs-toggle="tooltip" data-bs-placement="top" title="Out of Stock"></i>
                                 </div>
                             </div>
                             <div className="col-6 d-flex justify-content-end">
@@ -170,7 +170,7 @@ function Inventory({ Toggle }) {
                         </div>
                         <div className="row">
                             <div className="col-12">
-                                <table className="table  table-striped table-hover mt-3 text-center shadow-sm rounded overflow-hidden">
+                                <table className="table table-striped table-hover mt-3 text-center shadow-sm rounded overflow-hidden">
                                     <thead>
                                         <tr>
                                             <th scope='col'>Product ID</th>
@@ -190,10 +190,10 @@ function Inventory({ Toggle }) {
                                                     <div className="d-flex align-items-center">
                                                         <div className="me-auto">
                                                             {product.quantity < 5 && product.quantity != 0 && (
-                                                                <i className="bi bi-exclamation-triangle-fill text-warning fs-5 icon-inv"></i>
+                                                                <i className="bi bi-exclamation-triangle-fill text-warning fs-5 icon-inv" data-bs-toggle="tooltip" data-bs-placement="top" title="Low stock"></i>
                                                             )}
                                                             {product.quantity == 0 && (
-                                                                <i className="bi bi-exclamation-triangle-fill text-danger fs-5 icon-inv"></i>
+                                                                <i className="bi bi-exclamation-triangle-fill text-danger fs-5 icon-inv" data-bs-toggle="tooltip" data-bs-placement="top" title="Out of Stock"></i>
                                                             )}
                                                         </div>
                                                         <div className="pe-5">

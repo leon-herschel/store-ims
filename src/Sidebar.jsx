@@ -1,6 +1,6 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom' 
 import './Sidebar.css'
-import logo from './assets/logo.png'
+import logo from './assets/logo.svg'
 import { auth } from './firebaseConfig'
 
 function Sidebar() {
