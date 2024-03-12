@@ -116,7 +116,8 @@ function Inventory({ Toggle }) {
     const calculateTotalValue = (product) => {
         const matchingProduct = products.find((p) => p.key === product.key)
         if (matchingProduct) {
-            return matchingProduct.unitPrice * product.quantity
+            const totalValue = matchingProduct.unitPrice * product.quantity
+            return totalValue.toFixed(2)
         }
         return 0
     }
@@ -153,7 +154,7 @@ function Inventory({ Toggle }) {
                                 </div>
                                 <div>
                                     <span className="me-1 text-light fs-4">{outOfStockCount}</span>
-                                    <i className="bi bi-cart-x text-danger fs-4" data-bs-toggle="tooltip" data-bs-placement="top" title="Out of Stock"></i>
+                                    <i className="bi bi-cart-x text-danger fs-4" data-bs-toggle="tooltip" data-bs-placement="top" title="Out of stock"></i>
                                 </div>
                             </div>
                             <div className="col-6 d-flex justify-content-end">
@@ -193,7 +194,7 @@ function Inventory({ Toggle }) {
                                                                 <i className="bi bi-exclamation-triangle-fill text-warning fs-5 icon-inv" data-bs-toggle="tooltip" data-bs-placement="top" title="Low stock"></i>
                                                             )}
                                                             {product.quantity == 0 && (
-                                                                <i className="bi bi-exclamation-triangle-fill text-danger fs-5 icon-inv" data-bs-toggle="tooltip" data-bs-placement="top" title="Out of Stock"></i>
+                                                                <i className="bi bi-exclamation-triangle-fill text-danger fs-5 icon-inv" data-bs-toggle="tooltip" data-bs-placement="top" title="Out of stock"></i>
                                                             )}
                                                         </div>
                                                         <div className="pe-5">

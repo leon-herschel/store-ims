@@ -55,7 +55,7 @@ function Products({ Toggle }) {
             let productData = {
                 name: formData.name,
                 description: formData.description,
-                unitPrice: formData.unitPrice,
+                unitPrice: parseFloat(formData.unitPrice).toFixed(2),
                 quantity: formData.quantity,
                 timeStamp: serverTimestamp()
             };
@@ -97,7 +97,7 @@ function Products({ Toggle }) {
             setFormData({
                 name: productToEdit.name,
                 description: productToEdit.description,
-                unitPrice: productToEdit.unitPrice,
+                unitPrice: parseFloat(productToEdit.unitPrice).toFixed(2),
                 quantity: productToEdit.quantity
             })
             setEditMode(true)

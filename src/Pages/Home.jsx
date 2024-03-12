@@ -10,13 +10,15 @@ function Home({ Toggle }) {
     const [productsCount, setProductsCount] = useState(0)
     const [lowStockCount, setLowStockCount] = useState(0)
     const [outOfStockCount, setOutOfStockCount] = useState(0)
+    const [salesCount, setSalesCount] = useState(0)
     const [products, setProducts] = useState([])
     const [loading, setLoading] = useState(true)
     const navigate = useNavigate()
 
     useEffect(() => {
         const productsRef = ref(db, 'products')
-        const unsubscribe = onValue(productsRef, (snapshot) => {
+        const salesRef = ref(db, 'sales')
+        const unsubscribeProducts = onValue(productsRef, (snapshot) => {
             if (snapshot.exists()) {
                 const productsData = snapshot.val()
                 const productsArray = Object.entries(productsData).map(([key, value]) => ({
@@ -41,9 +43,20 @@ function Home({ Toggle }) {
             }
             setLoading(false)
         })
+
+        const unsubscribeSales = onValue(salesRef, (snapshot) => {
+            if (snapshot.exists()) {
+                const salesData = snapshot.val()
+                const salesCount = Object.keys(salesData).length
+                setSalesCount(salesCount);
+            } else {
+                setSalesCount(0)
+            }
+        })
     
         return () => {
-            unsubscribe()
+            unsubscribeProducts()
+            unsubscribeSales()
         }
     }, [])
 
@@ -74,7 +87,7 @@ function Home({ Toggle }) {
                                         <h3 className='fs-2'>{productsCount}</h3>
                                         <p className='fs-5'>Products</p>
                                     </div>
-                                    <i className="bi bi-cart-plus p-3 fs-1"></i>
+                                    <i className="bi bi-cart-plus p-3 fs-1 text-success"></i>
                                 </div>
                             </Link>
                         </div>
@@ -85,7 +98,7 @@ function Home({ Toggle }) {
                                         <h3 className='fs-2'>{lowStockCount}</h3>
                                         <p className='fs-5'>Low stock</p>
                                     </div>
-                                    <i className="bi bi-cart-dash p-3 fs-1"></i>
+                                    <i className="bi bi-cart-dash p-3 fs-1 text-warning"></i>
                                 </div>
                             </Link>
                         </div>
@@ -94,9 +107,9 @@ function Home({ Toggle }) {
                                 <div className="p-3 bg-white d-flex justify-content-around align-items-center rounded zoom-on">
                                     <div>
                                         <h3 className='fs-2'>{outOfStockCount}</h3>
-                                        <p className='fs-5'>Out of Stock</p>
+                                        <p className='fs-5'>Out of stock</p>
                                     </div>
-                                    <i className="bi bi-cart-x p-3 fs-1"></i>
+                                    <i className="bi bi-cart-x p-3 fs-1 text-danger"></i>
                                 </div>
                             </Link>
                         </div>
@@ -104,10 +117,10 @@ function Home({ Toggle }) {
                             <Link to="/sales" className="text-decoration-none text-dark">
                                 <div className="p-3 bg-white d-flex justify-content-around align-items-center rounded zoom-on">
                                     <div>
-                                        <h3 className='fs-2'>40</h3>
+                                        <h3 className='fs-2'>{salesCount}</h3>
                                         <p className='fs-5'>Sales</p>
                                     </div>
-                                    <i className="bi bi-receipt p-3 fs-1"></i>
+                                    <i className="bi bi-receipt p-3 fs-1 text-primary"></i>
                                 </div>
                             </Link>
                         </div>
