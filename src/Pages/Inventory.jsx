@@ -14,6 +14,8 @@ function Inventory({ Toggle }) {
     const [errorMessage, setErrorMessage] = useState('')
     const [lowStockCount, setLowStockCount] = useState(0)
     const [outOfStockCount, setOutOfStockCount] = useState(0)
+    const [showAddModal, setShowAddModal] = useState(false)
+    const [addQuantityValue, setAddQuantityValue] = useState('')
 
     useEffect(() => {
         const fetchProducts = async () => {
@@ -122,6 +124,53 @@ function Inventory({ Toggle }) {
         return 0
     }
 
+    const handleAddQuantity = (id) => {
+        setEditProductId(id);
+        setAddQuantityValue('')
+        setShowAddModal(true)
+    }
+
+    const handleAddQuantityConfirm = async () => {
+        const parsedAddQuantityValue = parseInt(addQuantityValue, 10)
+        if (!isNaN(parsedAddQuantityValue)) {
+            try {
+                const productRef = ref(db, `products/${editProductId}`)
+                const currentQuantity = parseInt(products.find(product => product.key === editProductId).quantity, 10)
+                const newQuantity = currentQuantity + parsedAddQuantityValue
+    
+                await update(productRef, {
+                    quantity: newQuantity
+                })
+                setShowAddModal(false)
+                setEditProductId('')
+                setConfirmationMessage('Quantity added successfully.')
+    
+                const updatedProducts = products.map(product => {
+                    if (product.key === editProductId) {
+                        return { ...product, quantity: newQuantity }
+                    }
+                    return product;
+                })
+    
+                setProducts(updatedProducts)
+                updateStockCounts(updatedProducts)
+                setAddQuantityValue('')
+            } catch (error) {
+                setErrorMessage('Error updating quantity.')
+                console.error("Error updating quantity: ", error)
+            }
+        } else {
+            setErrorMessage('Invalid quantity value.')
+        }
+    }
+    
+
+    const handleAddQuantityCancel = () => {
+        setShowAddModal(false)
+        setEditProductId('')
+        setAddQuantityValue('')
+    }
+
     return (
         <div className='px-3'>
             <Nav Toggle={Toggle} pageTitle="Inventory"/>
@@ -147,7 +196,7 @@ function Inventory({ Toggle }) {
                 ) : (
                     <>
                         <div className="row d-flex">
-                        <div className="col-6 d-flex justify-content-start">
+                            <div className="col-6 d-flex justify-content-start">
                                 <div className="me-3">
                                     <span className="me-1 text-light fs-4">{lowStockCount}</span>
                                     <i className="bi bi-cart-dash text-warning fs-4" data-bs-toggle="tooltip" data-bs-placement="top" title="Low stock"></i>
@@ -226,7 +275,10 @@ function Inventory({ Toggle }) {
                                                             <button onClick={handleCloseEdit} className="btn btn-secondary">Cancel</button>
                                                         </>
                                                     ) : (
-                                                        <button onClick={() => handleEdit(product.key, product.quantity)} className="btn btn-success">Edit Quantity</button>
+                                                        <>
+                                                            <button onClick={() => handleAddQuantity(product.key, product.quantity)} className="btn btn-primary me-2">Add</button>
+                                                            <button onClick={() => handleEdit(product.key, product.quantity)} className="btn btn-success">Edit</button>
+                                                        </>
                                                     )}
                                                 </td>
                                             </tr>
@@ -235,6 +287,32 @@ function Inventory({ Toggle }) {
                                 </table>
                             </div>
                         </div>
+                        {showAddModal && (
+                            <div className="modal" tabIndex="-1" role="dialog" style={{ display: 'block', backgroundColor: 'rgba(0, 0, 0, 0.5)' }}>
+                                <div className="modal-dialog modal-dialog-centered" role="document">
+                                    <div className="modal-content">
+                                        <div className="modal-header">
+                                            <h5 className="modal-title">Add Quantity</h5>
+                                            <button type="button" className="btn-close" aria-label="Close" onClick={handleAddQuantityCancel}></button>
+                                        </div>
+                                        <div className="modal-body">
+                                            <input
+                                                type="number"
+                                                value={addQuantityValue}
+                                                onChange={(e) => setAddQuantityValue(e.target.value)}
+                                                className="form-control w-50 mx-auto"
+                                                min="0"
+                                                placeholder="Quantity"
+                                            />
+                                        </div>
+                                        <div className="modal-footer">
+                                            <button type="button" className="btn btn-primary" onClick={handleAddQuantityConfirm}>Add</button>
+                                            <button type="button" className="btn btn-secondary" onClick={handleAddQuantityCancel}>Cancel</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
                     </>
                 )}
             </section>

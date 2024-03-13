@@ -79,55 +79,77 @@ function Sales({ Toggle }) {
     })
 
     const handleAdd = async (e) => {
-      e.preventDefault()
-  
-      try {
-          const salesRef = ref(db, 'sales')
-          const productsRef = ref(db, 'products')
-          const selectedProduct = products.find(product => product.name === formData.productName)
-  
-          if (!selectedProduct) {
-              throw new Error('Selected product not found.')
-          }
-  
-          if (selectedProduct.quantity < formData.quantity) {
-              throw new Error('Quantity not enough in stock.')
-          }
-  
-          const updatedQuantity = selectedProduct.quantity - formData.quantity
-          await update(ref(db, `products/${selectedProduct.key}`), { quantity: updatedQuantity })
-  
-          let saleData = {
-              productName: formData.productName,
-              quantity: formData.quantity,
-              totalPrice: (selectedProduct.unitPrice * formData.quantity).toFixed(2),
-              date: formData.date,
-              timeStamp: serverTimestamp()
-          };
-  
-          if (editMode) {
-              await update(ref(db, `sales/${editSaleId}`), saleData)
-              setConfirmationMessage('Sale updated successfully.')
-          } else {
-              await update(salesRef, {
-                  [generateSaleKey()]: saleData
-              });
-              setConfirmationMessage('Sale added successfully.')
-          }
-  
-          setEditMode(false)
-          setEditSaleId('')
-          setShowForm(false)
-          setFormData({
-              productName: '',
-              quantity: '',
-              totalPrice: '',
-              date: getCurrentDate()
-          });
-      } catch (err) {
-          setErrorMessage(err.message);
-          console.error('Error adding/updating sale: ', err)
-      }
+        e.preventDefault()
+    
+        try {
+            const salesRef = ref(db, 'sales')
+            const productsRef = ref(db, 'products')
+            const selectedProduct = products.find((product) => product.name === formData.productName)
+    
+            if (!selectedProduct) {
+                throw new Error('Selected product not found.')
+            }
+    
+            let updatedQuantity
+    
+            if (editMode) {
+                const saleToEdit = sales.find((sale) => sale.key === editSaleId)
+    
+                if (!saleToEdit) {
+                    throw new Error('Sale not found for editing.')
+                }
+    
+                const oldQuantity = saleToEdit.quantity;
+                const newQuantity = parseInt(formData.quantity, 10)
+    
+                // Calculate the difference between old and new quantity
+                const quantityDifference = newQuantity - oldQuantity
+    
+                await update(ref(db, `sales/${editSaleId}`), {
+                    productName: formData.productName,
+                    quantity: formData.quantity,
+                    totalPrice: (selectedProduct.unitPrice * newQuantity).toFixed(2),
+                    date: formData.date,
+                    timeStamp: serverTimestamp(),
+                });
+    
+                // Update the inventory based on the quantity difference
+                updatedQuantity = selectedProduct.quantity - quantityDifference
+            } else {
+                // If not in edit mode, subtract the quantity directly
+                if (selectedProduct.quantity < formData.quantity) {
+                    throw new Error('Quantity not enough in stock.')
+                }
+    
+                updatedQuantity = selectedProduct.quantity - formData.quantity
+    
+                await update(salesRef, {
+                    [generateSaleKey()]: {
+                        productName: formData.productName,
+                        quantity: formData.quantity,
+                        totalPrice: (selectedProduct.unitPrice * formData.quantity).toFixed(2),
+                        date: formData.date,
+                        timeStamp: serverTimestamp(),
+                    },
+                })
+            }
+    
+            await update(ref(db, `products/${selectedProduct.key}`), { quantity: updatedQuantity })
+    
+            setConfirmationMessage(editMode ? 'Sale updated successfully.' : 'Sale added successfully.')
+            setEditMode(false);
+            setEditSaleId('');
+            setShowForm(false);
+            setFormData({
+                productName: '',
+                quantity: '',
+                totalPrice: '',
+                date: getCurrentDate(),
+            });
+        } catch (err) {
+            setErrorMessage(err.message)
+            console.error('Error adding/updating sale: ', err)
+        }
     }
     
     const handleEdit = (id) => {
@@ -266,20 +288,22 @@ function Sales({ Toggle }) {
                                     </thead>
                                     <tbody className='table-striped'>
                                     {sales.filter(sale => {
-                                        const saleDataString = Object.values(sale).join(' ').toLowerCase();
-                                        return saleDataString.includes(searchQuery.toLowerCase());
-                                        }).map(sale => (
-                                            <tr key={sale.key}>
-                                                <td>{sale.key}</td>
-                                                <td>{sale.productName}</td>
-                                                <td>{sale.quantity}</td>
-                                                <td>{sale.totalPrice}</td>
-                                                <td>{sale.date}</td>
-                                                <td>
-                                                    <button onClick={() => handleEdit(sale.key)} className="btn btn-success me-2">Edit</button>
-                                                    <button onClick={() => handleDelete(sale.key)} className="btn btn-danger">Delete</button>
-                                                </td>
-                                            </tr>
+                                        const saleDataString = Object.values(sale).join(' ').toLowerCase()
+                                        return saleDataString.includes(searchQuery.toLowerCase())
+                                    })
+                                    .sort((a, b) => new Date(b.date) - new Date(a.date))
+                                    .map(sale => (
+                                        <tr key={sale.key}>
+                                            <td>{sale.key}</td>
+                                            <td>{sale.productName}</td>
+                                            <td>{sale.quantity}</td>
+                                            <td>{sale.totalPrice}</td>
+                                            <td>{sale.date}</td>
+                                            <td>
+                                                <button onClick={() => handleEdit(sale.key)} className="btn btn-success me-2">Edit</button>
+                                                <button onClick={() => handleDelete(sale.key)} className="btn btn-danger">Delete</button>
+                                            </td>
+                                        </tr>
                                         ))}
                                     </tbody>
                                 </table>
