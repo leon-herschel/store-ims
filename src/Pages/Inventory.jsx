@@ -306,8 +306,8 @@ function Inventory({ Toggle }) {
                                             />
                                         </div>
                                         <div className="modal-footer">
-                                            <button type="button" className="btn btn-primary" onClick={handleAddQuantityConfirm}>Add</button>
                                             <button type="button" className="btn btn-secondary" onClick={handleAddQuantityCancel}>Cancel</button>
+                                            <button type="button" className="btn btn-primary" onClick={handleAddQuantityConfirm}>Add</button>
                                         </div>
                                     </div>
                                 </div>

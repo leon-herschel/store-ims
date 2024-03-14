@@ -90,6 +90,8 @@ function Sales({ Toggle }) {
                 throw new Error('Selected product not found.')
             }
     
+            const newQuantity = parseInt(formData.quantity, 10)
+    
             let updatedQuantity
     
             if (editMode) {
@@ -99,11 +101,12 @@ function Sales({ Toggle }) {
                     throw new Error('Sale not found for editing.')
                 }
     
-                const oldQuantity = saleToEdit.quantity;
-                const newQuantity = parseInt(formData.quantity, 10)
-    
-                // Calculate the difference between old and new quantity
+                const oldQuantity = saleToEdit.quantity
                 const quantityDifference = newQuantity - oldQuantity
+    
+                if (quantityDifference > selectedProduct.quantity) {
+                    throw new Error('Quantity exceeds available inventory.')
+                }
     
                 await update(ref(db, `sales/${editSaleId}`), {
                     productName: formData.productName,
@@ -112,17 +115,14 @@ function Sales({ Toggle }) {
                     date: formData.date,
                     timeStamp: serverTimestamp(),
                 });
-    
-                // Update the inventory based on the quantity difference
                 updatedQuantity = selectedProduct.quantity - quantityDifference
+                await update(ref(db, `products/${selectedProduct.key}`), { quantity: updatedQuantity })
             } else {
-                // If not in edit mode, subtract the quantity directly
-                if (selectedProduct.quantity < formData.quantity) {
-                    throw new Error('Quantity not enough in stock.')
+                if (newQuantity > selectedProduct.quantity) {
+                    throw new Error('Quantity exceeds available inventory.')
                 }
-    
-                updatedQuantity = selectedProduct.quantity - formData.quantity
-    
+
+                updatedQuantity = selectedProduct.quantity - newQuantity
                 await update(salesRef, {
                     [generateSaleKey()]: {
                         productName: formData.productName,
@@ -132,20 +132,19 @@ function Sales({ Toggle }) {
                         timeStamp: serverTimestamp(),
                     },
                 })
+                await update(ref(db, `products/${selectedProduct.key}`), { quantity: updatedQuantity })
             }
     
-            await update(ref(db, `products/${selectedProduct.key}`), { quantity: updatedQuantity })
-    
             setConfirmationMessage(editMode ? 'Sale updated successfully.' : 'Sale added successfully.')
-            setEditMode(false);
-            setEditSaleId('');
-            setShowForm(false);
+            setEditMode(false)
+            setEditSaleId('')
+            setShowForm(false)
             setFormData({
                 productName: '',
                 quantity: '',
                 totalPrice: '',
                 date: getCurrentDate(),
-            });
+            })
         } catch (err) {
             setErrorMessage(err.message)
             console.error('Error adding/updating sale: ', err)
