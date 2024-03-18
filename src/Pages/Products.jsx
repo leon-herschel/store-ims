@@ -244,7 +244,7 @@ function Products({ Toggle }) {
             </section>
 
             {showForm && (
-                <div className="modal fade show d-block" id="productForm">
+                <div className="modal fade show d-block" id="productForm" style={{ display: 'block', backgroundColor: 'rgba(0, 0, 0, 0.5)' }}>
                     <div className="modal-dialog modal-dialog-centered">
                         <div className="modal-content">
                             <div className="modal-header">
@@ -270,7 +270,7 @@ function Products({ Toggle }) {
             )}
 
             {showDeleteConfirmation && (
-                <div className="modal fade show d-block" id="deleteConfirmationModal">
+                <div className="modal fade show d-block" id="deleteConfirmationModal" style={{ display: 'block', backgroundColor: 'rgba(0, 0, 0, 0.5)' }}>
                     <div className="modal-dialog modal-dialog-centered">
                         <div className="modal-content">
                             <div className="modal-header">

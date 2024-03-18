@@ -104,21 +104,26 @@ function Users({ Toggle }) {
     
       
     const handleEdit = (id) => {
-        setEditUserId(id)
-        const userToEdit = users.find(user => user.key === id)
-        if (userToEdit) {
+        setEditSaleId(id);
+        const saleToEdit = sales.find((sale) => sale.key === id);
+      
+        if (saleToEdit) {
+            const productsForSale = saleToEdit.products ? saleToEdit.products.map(product => ({
+                productName: product.productName,
+                quantity: product.quantity,
+            })) : [];
+        
             setFormData({
-                name: userToEdit.name,
-                email: userToEdit.email,
-                access: userToEdit.access,
-                password: userToEdit.password
+                products: productsForSale,
+                date: saleToEdit.date,
             });
-            setEditMode(true)
-            setShowForm(true)
+            setEditMode(true);
+            setShowForm(true);
         } else {
-            console.error("User not found with ID:", id)
+            console.error('Sale not found for ID:', id);
         }
     }
+    
     
     const handleDelete = (id) => {
         setEditUserId(id)
@@ -262,7 +267,7 @@ function Users({ Toggle }) {
             </section>
 
             {showForm && (
-                <div className="modal fade show d-block" id="userForm">
+                <div className="modal fade show d-block" id="userForm" style={{ display: 'block', backgroundColor: 'rgba(0, 0, 0, 0.5)' }}>
                     <div className="modal-dialog modal-dialog-centered">
                         <div className="modal-content">
                             <div className="modal-header">
@@ -314,7 +319,7 @@ function Users({ Toggle }) {
             )}
 
             {showDeleteConfirmation && (
-                <div className="modal fade show d-block" id="deleteConfirmationModal">
+                <div className="modal fade show d-block" id="deleteConfirmationModal" style={{ display: 'block', backgroundColor: 'rgba(0, 0, 0, 0.5)' }}>
                     <div className="modal-dialog modal-dialog-centered">
                         <div className="modal-content">
                             <div className="modal-header">
