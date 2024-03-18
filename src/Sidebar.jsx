@@ -45,10 +45,6 @@ function Sidebar() {
           <i className='bi bi-people fs-5 me-3'></i>
           <span className="d-none d-sm-inline">Users</span>
         </Link>
-        <Link to="/settings" className={location.pathname === '/settings' ? 'active list-group-item py-2 rounded' : 'list-group-item py-2 rounded'}>
-          <i className='bi bi-gear fs-5 me-3'></i>
-          <span className="d-none d-sm-inline">Settings</span>
-        </Link>
         <Link to="/reports" className={location.pathname === '/reports' ? 'active list-group-item py-2 rounded' : 'list-group-item py-2 rounded'}>
           <i className='bi bi-clipboard-data fs-5 me-3'></i>
           <span className="d-none d-sm-inline">Reports</span>

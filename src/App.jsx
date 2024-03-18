@@ -41,7 +41,6 @@ function App() {
                     <Route path="/inventory" element={Private(<Inventory Toggle={handleToggle}/>)}></Route>
                     <Route path="/sales" element={Private(<Sales Toggle={handleToggle}/>)}></Route>
                     <Route path="/users" element={Private(<Users Toggle={handleToggle}/>)}></Route>
-                    <Route path="/settings" element={Private(<Settings Toggle={handleToggle}/>)}></Route>
                     <Route path="/reports" element={Private(<Reports Toggle={handleToggle}/>)}></Route>
                     <Route path="*" element={Private(<PageNotFound/>)} />
                   </Routes>

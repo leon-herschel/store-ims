@@ -172,12 +172,12 @@ function Products({ Toggle }) {
             <Nav Toggle={Toggle} pageTitle="Products"/>
             <div className='px-3 position-relative'>
                 {confirmationMessage && (
-                    <div className="alert alert-success position-absolute top-0 start-50 translate-middle" role="alert">
+                    <div className="alert alert-success position-absolute top-0 start-50 translate-middle" role="alert" style={{ zIndex: 1070 }}>
                         {confirmationMessage}
                     </div>
                 )}
                 {errorMessage && (
-                    <div className="alert alert-danger position-absolute top-0 start-50 translate-middle" role="alert">
+                    <div className="alert alert-danger position-absolute top-0 start-50 translate-middle" role="alert" style={{ zIndex: 1070 }}>
                         {errorMessage}
                     </div>
                 )}

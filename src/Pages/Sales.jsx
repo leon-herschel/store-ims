@@ -3,13 +3,12 @@ import { useState, useEffect } from 'react'
 import { ref, onValue, remove, update, serverTimestamp } from 'firebase/database'
 import { db } from '../firebaseConfig'
 
-
 function Sales({ Toggle }) {
     const [sales, setSales] = useState([])
     const [products, setProducts] = useState([])
     const [showForm, setShowForm] = useState(false)
     const [editMode, setEditMode] = useState(false)
-    const [loading, setLoading] = useState(true)
+    const [loading, setLoading] = useState(true) 
     const [editSaleId, setEditSaleId] = useState('')
     const [searchQuery, setSearchQuery] = useState('')
     const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false)
@@ -30,9 +29,9 @@ function Sales({ Toggle }) {
                     })
                 })
                 setSales(salesArray)
-                setLoading(false)
+                setLoading(false) 
             } else {
-                setLoading(false)
+                setLoading(false) 
             }
         })
 
@@ -72,8 +71,7 @@ function Sales({ Toggle }) {
   }
 
   const [formData, setFormData] = useState({
-        productName: '',
-        quantity: '',
+        products: [{ productName: '', quantity: '' }],
         totalPrice: '',
         date: getCurrentDate()
     })
@@ -84,65 +82,40 @@ function Sales({ Toggle }) {
         try {
             const salesRef = ref(db, 'sales')
             const productsRef = ref(db, 'products')
-            const selectedProduct = products.find((product) => product.name === formData.productName)
     
-            if (!selectedProduct) {
-                throw new Error('Selected product not found.')
-            }
+            await Promise.all(formData.products.map(async (product) => {
+                const selectedProduct = products.find((p) => p.name === product.productName)
     
-            const newQuantity = parseInt(formData.quantity, 10)
-    
-            let updatedQuantity
-    
-            if (editMode) {
-                const saleToEdit = sales.find((sale) => sale.key === editSaleId)
-    
-                if (!saleToEdit) {
-                    throw new Error('Sale not found for editing.')
+                if (!selectedProduct) {
+                    throw new Error('Selected product not found.')
                 }
     
-                const oldQuantity = saleToEdit.quantity
-                const quantityDifference = newQuantity - oldQuantity
+                const newQuantity = parseInt(product.quantity, 10)
     
-                if (quantityDifference > selectedProduct.quantity) {
-                    throw new Error('Quantity exceeds available inventory.')
-                }
-    
-                await update(ref(db, `sales/${editSaleId}`), {
-                    productName: formData.productName,
-                    quantity: formData.quantity,
-                    totalPrice: (selectedProduct.unitPrice * newQuantity).toFixed(2),
-                    date: formData.date,
-                    timeStamp: serverTimestamp(),
-                });
-                updatedQuantity = selectedProduct.quantity - quantityDifference
-                await update(ref(db, `products/${selectedProduct.key}`), { quantity: updatedQuantity })
-            } else {
                 if (newQuantity > selectedProduct.quantity) {
                     throw new Error('Quantity exceeds available inventory.')
                 }
-
-                updatedQuantity = selectedProduct.quantity - newQuantity
+    
+                const updatedQuantity = selectedProduct.quantity - newQuantity
+    
                 await update(salesRef, {
                     [generateSaleKey()]: {
-                        productName: formData.productName,
-                        quantity: formData.quantity,
-                        totalPrice: (selectedProduct.unitPrice * formData.quantity).toFixed(2),
+                        productName: product.productName,
+                        quantity: product.quantity,
+                        totalPrice: (selectedProduct.unitPrice * product.quantity).toFixed(2),
                         date: formData.date,
                         timeStamp: serverTimestamp(),
                     },
                 })
                 await update(ref(db, `products/${selectedProduct.key}`), { quantity: updatedQuantity })
-            }
+            }))
     
             setConfirmationMessage(editMode ? 'Sale updated successfully.' : 'Sale added successfully.')
             setEditMode(false)
             setEditSaleId('')
             setShowForm(false)
             setFormData({
-                productName: '',
-                quantity: '',
-                totalPrice: '',
+                products: [{ productName: '', quantity: '' }],
                 date: getCurrentDate(),
             })
         } catch (err) {
@@ -152,21 +125,24 @@ function Sales({ Toggle }) {
     }
     
     const handleEdit = (id) => {
-        setEditSaleId(id)
-        const saleToEdit = sales.find((sale) => sale.key === id)
+        setEditSaleId(id);
+        const saleToEdit = sales.find((sale) => sale.key === id);
         if (saleToEdit) {
+            const productsForSale = saleToEdit.products.map(product => ({
+                productName: product.productName,
+                quantity: product.quantity,
+            }));
+    
             setFormData({
-                productName: saleToEdit.productName,
-                quantity: saleToEdit.quantity,
-                totalPrice: saleToEdit.totalPrice,
-                date: saleToEdit.date
-            })
-            setEditMode(true)
-            setShowForm(true)
+                products: productsForSale,
+                date: saleToEdit.date,
+            });
+            setEditMode(true);
+            setShowForm(true);
         } else {
-            console.error('Sale not found with ID:', id)
+            console.error('Sale not found with ID:', id);
         }
-    }
+    };
 
     const handleDelete = (id) => {
         setEditSaleId(id)
@@ -191,10 +167,9 @@ function Sales({ Toggle }) {
 
     const handleCloseForm = () => {
         setFormData({
-            productName: '',
-            quantity: '',
+            products: [{ productName: '', quantity: '' }],
             totalPrice: '',
-            date: ''
+            date: getCurrentDate()
         })
         setEditMode(false)
         setEditSaleId('')
@@ -232,17 +207,42 @@ function Sales({ Toggle }) {
         return Math.floor(1000 + Math.random() * 9000).toString()
     }
 
+    const handleAddProductField = () => {
+        setFormData({
+            ...formData,
+            products: [...formData.products, { productName: '', quantity: '' }]
+        })
+    }
+
+    const handleRemoveProductField = (index) => {
+        const updatedProducts = formData.products.filter((_, i) => i !== index)
+        setFormData({
+            ...formData,
+            products: updatedProducts
+        })
+    }
+
+    const handleProductChange = (index, e) => {
+        const { name, value } = e.target
+        const updatedProducts = [...formData.products]
+        updatedProducts[index][name] = value
+        setFormData({
+            ...formData,
+            products: updatedProducts
+        })
+    }
+
     return (
         <div className='px-3'>
             <Nav Toggle={Toggle} pageTitle="Sales"/>
             <div className='px-3 position-relative'>
                 {confirmationMessage && (
-                    <div className="alert alert-success position-absolute top-0 start-50 translate-middle" role="alert">
+                    <div className="alert alert-success position-absolute top-0 start-50 translate-middle" role="alert" style={{ zIndex: 1070 }}>
                         {confirmationMessage}
                     </div>
                 )}
                 {errorMessage && (
-                    <div className="alert alert-danger position-absolute top-0 start-50 translate-middle" role="alert">
+                    <div className="alert alert-danger position-absolute top-0 start-50 translate-middle" role="alert" style={{ zIndex: 1070 }}>
                         {errorMessage}
                     </div>
                 )}
@@ -256,62 +256,62 @@ function Sales({ Toggle }) {
                     </div>
                 ) : (
                     <>
-                        <div className="row d-flex">
-                            <div className="col-6">
-                                <button onClick={() => setShowForm(true)} className="btn btn-primary newUser" data-bs-toggle="modal" data-bs-target="#saleForm">Add Sale</button>
-                            </div>
-                            <div className="col-6 d-flex justify-content-end">
-                                <div className="w-50">
-                                    <input 
-                                        type="text" 
-                                        className="form-control me-2" 
-                                        placeholder="Search" 
-                                        value={searchQuery} 
-                                        onChange={handleSearchChange} 
-                                    />
-                                </div>
+                    <div className="row d-flex">
+                        <div className="col-6">
+                            <button onClick={() => setShowForm(true)} className="btn btn-primary newUser" data-bs-toggle="modal" data-bs-target="#saleForm">Add Sale</button>
+                        </div>
+                        <div className="col-6 d-flex justify-content-end">
+                            <div className="w-50">
+                                <input 
+                                    type="text" 
+                                    className="form-control me-2" 
+                                    placeholder="Search" 
+                                    value={searchQuery} 
+                                    onChange={handleSearchChange} 
+                                />
                             </div>
                         </div>
-                        <div className="row">
-                            <div className="col-12">
-                                <table className="table table-striped table-hover mt-3 text-center shadow-sm rounded overflow-hidden">
-                                    <thead>
-                                        <tr>
-                                            <th scope='col'>Sales ID</th>
-                                            <th scope='col'>Product Name</th>
-                                            <th scope='col'>Quantity</th>
-                                            <th scope='col'>Total Price</th>
-                                            <th scope='col'>Date</th>
-                                            <th scope='col'>Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className='table-striped'>
-                                    {sales.filter(sale => {
-                                        const saleDataString = Object.values(sale).join(' ').toLowerCase()
-                                        return saleDataString.includes(searchQuery.toLowerCase())
-                                    })
-                                    .sort((a, b) => new Date(b.date) - new Date(a.date))
-                                    .map(sale => (
-                                        <tr key={sale.key}>
-                                            <td>{sale.key}</td>
-                                            <td>{sale.productName}</td>
-                                            <td>{sale.quantity}</td>
-                                            <td>{sale.totalPrice}</td>
-                                            <td>{sale.date}</td>
-                                            <td>
-                                                <button onClick={() => handleEdit(sale.key)} className="btn btn-success me-2">Edit</button>
-                                                <button onClick={() => handleDelete(sale.key)} className="btn btn-danger">Delete</button>
-                                            </td>
-                                        </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
+                    </div>
+                    <div className="row">
+                        <div className="col-12">
+                            <table className="table table-striped table-hover mt-3 text-center shadow-sm rounded overflow-hidden">
+                                <thead>
+                                    <tr>
+                                        <th scope='col'>Sales ID</th>
+                                        <th scope='col'>Product Name</th>
+                                        <th scope='col'>Quantity</th>
+                                        <th scope='col'>Total Price</th>
+                                        <th scope='col'>Date</th>
+                                        <th scope='col'>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody className='table-striped'>
+                                {sales.filter(sale => {
+                                    const saleDataString = Object.values(sale).join(' ').toLowerCase()
+                                    return saleDataString.includes(searchQuery.toLowerCase())
+                                })
+                                .sort((a, b) => new Date(b.date) - new Date(a.date))
+                                .map(sale => (
+                                    <tr key={sale.key}>
+                                        <td>{sale.key}</td>
+                                        <td>{sale.productName}</td>
+                                        <td>{sale.quantity}</td>
+                                        <td>{sale.totalPrice}</td>
+                                        <td>{sale.date}</td>
+                                        <td>
+                                            <button onClick={() => handleEdit(sale.key)} className="btn btn-success me-2">Edit</button>
+                                            <button onClick={() => handleDelete(sale.key)} className="btn btn-danger">Delete</button>
+                                        </td>
+                                    </tr>
+                                    ))}
+                                </tbody>
+                            </table>
                         </div>
+                    </div>
                     </>
-                    )}
-            </section>
-
+                )}
+                </section>
+    
             {showForm && (
                 <div className="modal fade show d-block" id="saleForm">
                     <div className="modal-dialog modal-dialog-centered">
@@ -322,25 +322,60 @@ function Sales({ Toggle }) {
                             </div>
                             <div className="modal-body d-flex justify-content-center align-items-center">
                                 <form onSubmit={handleAdd} className="w-75">
-                                    <select name="productName" value={formData.productName} onChange={handleChange} className="form-select mb-3" required>
-                                        <option value="">Select Product</option>
-                                        {products.map(product => (
-                                            <option key={product.key} value={product.name}>{product.name}</option>
-                                        ))}
-                                    </select>
-                                    <input type="number" name="quantity" value={formData.quantity} onChange={handleChange} className="form-control mb-3" placeholder="Quantity" required />
+                                    {formData.products.map((product, index) => (
+                                        <div key={index} className="mb-3">
+                                            <select
+                                                name="productName"
+                                                value={product.productName}
+                                                onChange={(e) => handleProductChange(index, e)}
+                                                className="form-select mb-3"
+                                                required
+                                            >
+                                                <option value="">Select Product</option>
+                                                {products.map((p) => (
+                                                    <option key={p.key} value={p.name}>{p.name}</option>
+                                                ))}
+                                            </select>
+                                            <input
+                                                type="number"
+                                                name="quantity"
+                                                value={product.quantity}
+                                                onChange={(e) => handleProductChange(index, e)}
+                                                className="form-control mb-3"
+                                                placeholder="Quantity"
+                                                required
+                                            />
+                                            {index > 0 && (
+                                                <button
+                                                    type="button"
+                                                    className="btn btn-danger"
+                                                    onClick={() => handleRemoveProductField(index)}
+                                                >
+                                                    Remove
+                                                </button>
+                                            )}
+                                        </div>
+                                    ))}
+                                    <div className="d-grid mb-3">
+                                        <button
+                                            type="button"
+                                            className="btn btn-success"
+                                            onClick={handleAddProductField}
+                                        >
+                                            Add Product
+                                        </button>
+                                    </div>
                                     <input type="date" name="date" value={formData.date} onChange={handleChange} className="form-control mb-3" required />
                                     <div className="d-grid my-3 shadow">
                                         <button type="submit" className="btn btn-primary login-btn">{editMode ? 'Update' : 'Submit'}</button>
                                     </div>
-                                    
                                 </form>
                             </div>
                         </div>
                     </div>
                 </div>
             )}
-
+    
             {showDeleteConfirmation && (
                 <div className="modal fade show d-block" id="deleteConfirmationModal">
                     <div className="modal-dialog modal-dialog-centered">
@@ -362,6 +397,6 @@ function Sales({ Toggle }) {
             )}
         </div>
     )
-}
+}    
 
 export default Sales
