@@ -1,6 +1,6 @@
 import Nav from '../Nav'
 import { useState, useEffect } from 'react'
-import { ref, onValue, remove, update, serverTimestamp } from 'firebase/database'
+import { ref, onValue, remove, update, set } from 'firebase/database'
 import { db } from '../firebaseConfig'
 
 function Sales({ Toggle }) {
@@ -15,10 +15,9 @@ function Sales({ Toggle }) {
     const [confirmationMessage, setConfirmationMessage] = useState('')
     const [errorMessage, setErrorMessage] = useState('')
     const [formData, setFormData] = useState({
-        productName: '',
-        quantity: '',
-        totalPrice: ''
-    })
+        products: [], 
+        totalPrice: 0, 
+      })
     const [dateTime, setDateTime] = useState('')
 
     useEffect(() => {
@@ -83,68 +82,52 @@ function Sales({ Toggle }) {
     }
 
     const handleAdd = async (e) => {
-        e.preventDefault()
+        e.preventDefault();
     
         try {
-            const salesRef = ref(db, 'sales')
+            const saleKey = generateSaleKey()
+            const salesRef = ref(db, `sales/${saleKey}`)
             const productsRef = ref(db, 'products')
-            const selectedProduct = products.find((product) => product.name === formData.productName)
     
-            if (!selectedProduct) {
-                throw new Error('Selected product not found.')
+            const saleData = {
+                dateTime: getCurrentDateTime(),
+                totalPrice: 0,
+                products: [],
             }
     
-            const newQuantity = parseInt(formData.quantity, 10)
+            for (const productItem of formData.products) {
+                const selectedProduct = products.find((product) => product.name === productItem.productName)
     
-            let updatedQuantity
-    
-            if (editMode) {
-                const saleToEdit = sales.find((sale) => sale.key === editSaleId)
-    
-                if (!saleToEdit) {
-                    throw new Error('Sale not found for editing.')
+                if (!selectedProduct) {
+                    throw new Error('Selected product not found.')
                 }
     
-                const oldQuantity = saleToEdit.quantity
-                const quantityDifference = newQuantity - oldQuantity
-    
-                if (quantityDifference > selectedProduct.quantity) {
+                if (productItem.quantity > selectedProduct.quantity) {
                     throw new Error('Quantity exceeds available inventory.')
                 }
     
-                await update(ref(db, `sales/${editSaleId}`), {
-                    productName: formData.productName,
-                    quantity: formData.quantity,
-                    totalPrice: (selectedProduct.unitPrice * newQuantity).toFixed(2),
-                    dateTime: getCurrentDateTime()
+                saleData.products.push({
+                    productName: productItem.productName,
+                    quantity: productItem.quantity,
+                    totalPrice: selectedProduct.unitPrice * productItem.quantity,
                 })
-                updatedQuantity = selectedProduct.quantity - quantityDifference
-                await update(ref(db, `products/${selectedProduct.key}`), { quantity: updatedQuantity })
-            } else {
-                if (newQuantity > selectedProduct.quantity) {
-                    throw new Error('Quantity exceeds available inventory.')
-                }
-
-                updatedQuantity = selectedProduct.quantity - newQuantity
-                await update(salesRef, {
-                    [generateSaleKey()]: {
-                        productName: formData.productName,
-                        quantity: formData.quantity,
-                        totalPrice: (selectedProduct.unitPrice * formData.quantity).toFixed(2),
-                        dateTime: getCurrentDateTime(),
-                    },
+    
+                saleData.totalPrice += saleData.products[saleData.products.length - 1].totalPrice
+    
+                await update(ref(db, `products/${selectedProduct.key}`), {
+                    quantity: selectedProduct.quantity - productItem.quantity,
                 })
-                await update(ref(db, `products/${selectedProduct.key}`), { quantity: updatedQuantity })
             }
+    
+            await set(salesRef, saleData)
     
             setConfirmationMessage(editMode ? 'Sale updated successfully.' : 'Sale added successfully.')
             setEditMode(false)
             setEditSaleId('')
             setShowForm(false)
             setFormData({
-                productName: '',
-                quantity: '',
-                totalPrice: ''
+                products: [],
+                totalPrice: 0,
             })
             setDateTime(getCurrentDateTime())
         } catch (err) {
@@ -152,6 +135,7 @@ function Sales({ Toggle }) {
             console.error('Error adding/updating sale: ', err)
         }
     }
+      
     
     const handleEdit = (id) => {
         setEditSaleId(id)
@@ -192,23 +176,28 @@ function Sales({ Toggle }) {
     }
 
     const handleCloseForm = () => {
-        setFormData({
-            productName: '',
-            quantity: '',
-            totalPrice: ''
-        })
-        setEditMode(false)
-        setEditSaleId('')
         setShowForm(false)
-    }
-
-    const handleChange = (e) => {
-        const { name, value } = e.target
         setFormData({
-            ...formData,
-            [name]: value
+          products: [], 
+          totalPrice: 0,
         })
-    }
+      }
+
+    const handleChange = (event) => {
+        const { name, value } = event.target;
+      
+        if (name === 'productName') {
+          // Handle product selection (logic can remain similar)
+        } else if (name.startsWith('quantity_')) {
+          const productIndex = parseInt(name.split('_')[1], 10);
+          setFormData((prevData) => ({
+            ...prevData,
+            products: prevData.products.map((item, index) =>
+              index === productIndex ? { ...item, quantity: value } : item
+            ),
+          }))
+        }
+      }
 
     useEffect(() => {
         const confirmationTimeout = setTimeout(() => {
@@ -232,6 +221,25 @@ function Sales({ Toggle }) {
     const generateSaleKey = () => {
         return Math.floor(1000 + Math.random() * 9000).toString()
     }
+
+    const handleAddProduct = () => {
+        const newProductName = document.querySelector('[name="newProductName"]').value;
+        const newQuantity = parseInt(document.querySelector('[name="newQuantity"]').value, 10);
+      
+        if (!newProductName || !newQuantity) {
+          return; // Handle empty input fields (optional)
+        }
+      
+        setFormData((prevData) => ({
+          ...prevData,
+          products: [...prevData.products, { productName: newProductName, quantity: newQuantity }],
+        }));
+      
+        // Reset new product input fields (optional)
+        document.querySelector('[name="newProductName"]').value = '';
+        document.querySelector('[name="newQuantity"]').value = '';
+      };
+      
 
     return (
         <div className='px-3'>
@@ -259,7 +267,9 @@ function Sales({ Toggle }) {
                     <>
                         <div className="row d-flex">
                             <div className="col-6">
+                            {formData ? (
                                 <button onClick={() => setShowForm(true)} className="btn btn-primary newUser" data-bs-toggle="modal" data-bs-target="#saleForm">Add Sale</button>
+                            ) : null}
                             </div>
                             <div className="col-6 d-flex justify-content-end">
                                 <div className="w-50">
@@ -287,26 +297,38 @@ function Sales({ Toggle }) {
                                         </tr>
                                     </thead>
                                     <tbody className='table-striped'>
-                                        {sales
-                                            .filter(sale => {
-                                                const saleDataString = Object.values(sale).join(' ').toLowerCase()
-                                                return saleDataString.includes(searchQuery.toLowerCase())
-                                            })
-                                            .slice().sort((a, b) => new Date(b.dateTime) - new Date(a.dateTime))
-                                            .map(sale => (
-                                                <tr key={sale.key}>
-                                                    <td>{sale.key}</td>
-                                                    <td>{sale.productName}</td>
-                                                    <td>{sale.quantity}</td>
-                                                    <td>{sale.totalPrice}</td>
-                                                    <td>{sale.dateTime}</td>
-                                                    <td>
-                                                        <button onClick={() => handleEdit(sale.key)} className="btn btn-success me-2">Edit</button>
-                                                        <button onClick={() => handleDelete(sale.key)} className="btn btn-danger">Delete</button>
-                                                    </td>
-                                                </tr>
-                                            ))}
-                                    </tbody>
+                                    {sales
+                                        .filter(sale => {
+                                            const saleDataString = Object.values(sale).join(' ').toLowerCase()
+                                            return saleDataString.includes(searchQuery.toLowerCase())
+                                        })
+                                        .slice().sort((a, b) => new Date(b.dateTime) - new Date(a.dateTime))
+                                        .map(sale => (
+                                            <tr key={sale.key}>
+                                                <td>{sale.key}</td>
+                                                <td>
+                                                    {sale.products.map((product, index) => (
+                                                        <div key={index}>
+                                                            <p>{product.productName}</p>
+                                                        </div>
+                                                    ))}
+                                                </td>
+                                                <td>
+                                                    {sale.products.map((product, index) => (
+                                                        <div key={index}>
+                                                            <p>{product.quantity}</p>
+                                                        </div>
+                                                    ))}
+                                                </td>
+                                                <td>{sale.totalPrice.toFixed(2)}</td>
+                                                <td>{sale.dateTime}</td>
+                                                <td>
+                                                    <button onClick={() => handleEdit(sale.key)} className="btn btn-success me-2">Edit</button>
+                                                    <button onClick={() => handleDelete(sale.key)} className="btn btn-danger">Delete</button>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                </tbody>
                                 </table>
                             </div>
                         </div>
@@ -315,31 +337,69 @@ function Sales({ Toggle }) {
             </section>
 
             {showForm && (
-                <div className="modal fade show d-block" id="saleForm">
-                    <div className="modal-dialog modal-dialog-centered">
-                        <div className="modal-content">
-                            <div className="modal-header">
-                                <h5 className="modal-title">{editMode ? 'Edit Sale' : 'Add Sale'}</h5>
-                                <button type="button" className="btn-close" onClick={handleCloseForm} aria-label="Close"></button>
-                            </div>
-                            <div className="modal-body d-flex justify-content-center align-items-center">
-                                <form onSubmit={handleAdd} className="w-75">
-                                    <select name="productName" value={formData.productName} onChange={handleChange} className="form-select mb-3" required>
-                                        <option value="">Select Product</option>
-                                        {products.map(product => (
-                                            <option key={product.key} value={product.name}>{product.name}</option>
-                                        ))}
-                                    </select>
-                                    <input type="number" name="quantity" value={formData.quantity} onChange={handleChange} className="form-control mb-3" placeholder="Quantity" required />
-                                    <div className="d-grid my-3 shadow">
-                                        <button type="submit" className="btn btn-primary login-btn">{editMode ? 'Update' : 'Submit'}</button>
-                                    </div>
-                                    
-                                </form>
-                            </div>
+            <div className="modal fade show d-block" id="saleForm">
+                <div className="modal-dialog modal-dialog-centered">
+                <div className="modal-content">
+                    <div className="modal-header">
+                    <h5 className="modal-title">{editMode ? 'Edit Sale' : 'Add Sale'}</h5>
+                    <button type="button" className="btn-close" onClick={handleCloseForm} aria-label="Close"></button>
+                    </div>
+                    <div className="modal-body d-flex justify-content-center align-items-center">
+                    <form onSubmit={handleAdd} className="w-75">
+                        {formData.products.map((productItem, index) => (
+                        <div key={index} className="mb-3">
+                            <select
+                            name={`productName_${index}`} // Unique name for each product
+                            value={productItem.productName}
+                            onChange={handleChange}
+                            className="form-select"
+                            required
+                            >
+                            <option value="">Select Product</option>
+                            {products.map((product) => (
+                                <option key={product.key} value={product.name}>
+                                {product.name}
+                                </option>
+                            ))}
+                            </select>
+                            <input
+                            type="number"
+                            name={`quantity_${index}`} // Unique name for each quantity
+                            value={productItem.quantity}
+                            onChange={handleChange}
+                            className="form-control mb-3"
+                            placeholder="Quantity"
+                            required
+                            />
                         </div>
+                        ))}
+                        {formData.products.length == 0 && ( 
+                        <p className='text-danger'>Add products to sell.</p>
+                        )}
+                        <div className="d-flex mb-3">
+                        <select name="newProductName" className="form-select me-2" required>
+                            <option value="">Select Product</option>
+                            {products.map((product) => (
+                            <option key={product.key} value={product.name}>
+                                {product.name}
+                            </option>
+                            ))}
+                        </select>
+                        <input type="number" name="newQuantity" className="form-control" placeholder="Quantity" required />
+                        <button type="button" className="btn btn-success ms-2" onClick={handleAddProduct}>
+                            <i className='bi bi-plus fs-5'></i>
+                        </button>
+                        </div>
+                        <div className="d-grid my-3 shadow">
+                        <button type="submit" className="btn btn-primary login-btn">
+                            {editMode ? 'Update' : 'Submit'}
+                        </button>
+                        </div>
+                    </form>
                     </div>
                 </div>
+                </div>
+            </div>
             )}
 
             {showDeleteConfirmation && (
