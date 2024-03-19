@@ -7,18 +7,17 @@ function Sales({ Toggle }) {
     const [sales, setSales] = useState([])
     const [products, setProducts] = useState([])
     const [showForm, setShowForm] = useState(false)
-    const [editMode, setEditMode] = useState(false)
     const [loading, setLoading] = useState(true)
     const [editSaleId, setEditSaleId] = useState('')
     const [searchQuery, setSearchQuery] = useState('')
     const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false)
     const [confirmationMessage, setConfirmationMessage] = useState('')
+    const [showUndoConfirmation, setShowUndoConfirmation] = useState(false)
     const [errorMessage, setErrorMessage] = useState('')
     const [formData, setFormData] = useState({
         products: [], 
         totalPrice: 0, 
       })
-    const [dateTime, setDateTime] = useState('')
 
     useEffect(() => {
         const salesRef = ref(db, 'sales')
@@ -82,7 +81,7 @@ function Sales({ Toggle }) {
     }
 
     const handleAdd = async (e) => {
-        e.preventDefault();
+        e.preventDefault()
     
         try {
             if (formData.products.length === 0) {
@@ -124,35 +123,14 @@ function Sales({ Toggle }) {
     
             await set(salesRef, saleData)
     
-            setConfirmationMessage(editMode ? 'Sale updated successfully.' : 'Sale added successfully.')
-            setEditMode(false)
-            setEditSaleId('')
+            setConfirmationMessage('Sale added successfully.')
             setShowForm(false)
             setFormData({
                 products: [],
                 totalPrice: 0,
             })
-            setDateTime(getCurrentDateTime())
         } catch (err) {
             console.error('Error adding/updating sale: ', err)
-        }
-    }
-      
-    
-    const handleEdit = (id) => {
-        setEditSaleId(id)
-        const saleToEdit = sales.find((sale) => sale.key === id)
-        if (saleToEdit) {
-            setFormData({
-                productName: saleToEdit.productName,
-                quantity: saleToEdit.quantity,
-                totalPrice: saleToEdit.totalPrice,
-                date: saleToEdit.date
-            })
-            setEditMode(true)
-            setShowForm(true)
-        } else {
-            console.error('Sale not found with ID:', id)
         }
     }
 
@@ -183,23 +161,7 @@ function Sales({ Toggle }) {
           products: [], 
           totalPrice: 0,
         })
-      }
-
-    const handleChange = (event) => {
-        const { name, value } = event.target;
-      
-        if (name === 'productName') {
-          // Handle product selection (logic can remain similar)
-        } else if (name.startsWith('quantity_')) {
-          const productIndex = parseInt(name.split('_')[1], 10);
-          setFormData((prevData) => ({
-            ...prevData,
-            products: prevData.products.map((item, index) =>
-              index === productIndex ? { ...item, quantity: value } : item
-            ),
-          }))
-        }
-      }
+    }
 
     useEffect(() => {
         const confirmationTimeout = setTimeout(() => {
@@ -256,9 +218,39 @@ function Sales({ Toggle }) {
             products: prevData.products.filter((_, index) => index !== indexToRemove),
         }))
     }
-    
-      
 
+    const handleUndo = (id) => {
+        setEditSaleId(id)
+        setShowUndoConfirmation(true)
+    }
+
+    const confirmUndo = async () => {
+        try {
+            const saleToReverse = sales.find((sale) => sale.key === editSaleId)
+            if (saleToReverse) {
+                for (const productItem of saleToReverse.products) {
+                    const selectedProduct = products.find((product) => product.name === productItem.productName)
+                    if (selectedProduct) {
+                        await update(ref(db, `products/${selectedProduct.key}`), {
+                            quantity: selectedProduct.quantity + Number(productItem.quantity),
+                        })
+                    }
+                }
+                await remove(ref(db, `sales/${editSaleId}`))
+                setConfirmationMessage('Sale reversed successfully.')
+                setSales((prevSales) => prevSales.filter((sale) => sale.key !== editSaleId))
+            } else {
+                console.error('Sale not found with ID:', editSaleId)
+            }
+        } catch (error) {
+            console.error('Error reversing transaction: ', error)
+            setErrorMessage('Error reversing transaction.')
+        } finally {
+            setEditSaleId('')
+            setShowUndoConfirmation(false)
+        }
+    }
+    
     return (
         <div className='px-3'>
             <Nav Toggle={Toggle} pageTitle="Sales"/>
@@ -341,7 +333,7 @@ function Sales({ Toggle }) {
                                                 <td>{sale.totalPrice.toFixed(2)}</td>
                                                 <td>{sale.dateTime}</td>
                                                 <td>
-                                                    <button onClick={() => handleEdit(sale.key)} className="btn btn-success me-2">Edit</button>
+                                                    <button onClick={() => handleUndo(sale.key)} className="btn btn-success me-2">Undo</button>
                                                     <button onClick={() => handleDelete(sale.key)} className="btn btn-danger">Delete</button>
                                                 </td>
                                             </tr>
@@ -359,7 +351,7 @@ function Sales({ Toggle }) {
                 <div className="modal-dialog modal-dialog-centered">
                 <div className="modal-content">
                     <div className="modal-header">
-                    <h5 className="modal-title">{editMode ? 'Edit Sale' : 'Add Sale'}</h5>
+                    <h5 className="modal-title">Add Sale</h5>
                     <button type="button" className="btn-close" onClick={handleCloseForm} aria-label="Close"></button>
                     </div>
                     <div className="modal-body d-flex justify-content-center align-items-center">
@@ -367,17 +359,11 @@ function Sales({ Toggle }) {
                         {formData.products.map((productItem, index) => (
                             <div key={index} className="mb-3 d-flex align-items-center">
                             <div className="flex-grow-1 me-2 w-75">
-                                <div className="form-control w-100">{productItem.productName}</div>
+                                <div className="form-control">{productItem.productName}</div>
                             </div>
-                            <input
-                                type="number"
-                                name={`quantity_${index}`}
-                                value={productItem.quantity}
-                                onChange={handleChange}
-                                className="form-control me-2"
-                                placeholder="Quantity"
-                                required
-                            />
+                            <div className="flex-grow-1 me-2 w-25">
+                                <div className="form-control">{productItem.quantity}</div>
+                            </div>
                             <button
                                 type="button"
                                 className="btn btn-danger"
@@ -406,7 +392,7 @@ function Sales({ Toggle }) {
                         </div>
                         <div className="d-grid my-3 shadow">
                         <button type="submit" className="btn btn-primary login-btn">
-                            {editMode ? 'Update' : 'Submit'}
+                            Submit
                         </button>
                         </div>
                     </form>
@@ -417,7 +403,7 @@ function Sales({ Toggle }) {
             )}
 
             {showDeleteConfirmation && (
-                <div className="modal fade show d-block" id="deleteConfirmationModal">
+                <div className="modal fade show d-block" id="deleteConfirmationModal" style={{ display: 'block', backgroundColor: 'rgba(0, 0, 0, 0.5)' }}>
                     <div className="modal-dialog modal-dialog-centered">
                         <div className="modal-content">
                             <div className="modal-header">
@@ -430,6 +416,26 @@ function Sales({ Toggle }) {
                             <div className="modal-footer">
                                 <button type="button" className="btn btn-secondary" onClick={() => setShowDeleteConfirmation(false)}>Cancel</button>
                                 <button type="button" className="btn btn-danger" onClick={confirmDelete}>Delete</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {showUndoConfirmation && (
+                <div className="modal fade show d-block" id="undoConfirmationModal" style={{ display: 'block', backgroundColor: 'rgba(0, 0, 0, 0.5)' }}>
+                    <div className="modal-dialog modal-dialog-centered">
+                        <div className="modal-content">
+                            <div className="modal-header">
+                                <h5 className="modal-title">Confirm Undo</h5>
+                                <button type="button" className="btn-close" onClick={() => setShowUndoConfirmation(false)} aria-label="Close"></button>
+                            </div>
+                            <div className="modal-body">
+                                Undo this sale and restore inventory quantities?
+                            </div>
+                            <div className="modal-footer">
+                                <button type="button" className="btn btn-secondary" onClick={() => setShowUndoConfirmation(false)}>Cancel</button>
+                                <button type="button" className="btn btn-success" onClick={confirmUndo}>Undo</button>
                             </div>
                         </div>
                     </div>
