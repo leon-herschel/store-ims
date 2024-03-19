@@ -1,7 +1,8 @@
-import Nav from '../Components/Navigation/Nav'
+import Nav from '../../Components/Navigation/Nav'
+import ConfirmationModal from './ConfirmationModal'
 import { useState, useEffect } from 'react'
 import { ref, onValue, remove, update, set, push} from 'firebase/database'
-import { db } from '../firebaseConfig'
+import { db } from '../../firebaseConfig'
 
 function Sales({ Toggle }) {
     const [sales, setSales] = useState([])
@@ -10,9 +11,10 @@ function Sales({ Toggle }) {
     const [loading, setLoading] = useState(true)
     const [editSaleId, setEditSaleId] = useState('')
     const [searchQuery, setSearchQuery] = useState('')
+    const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false)
     const [showArchiveConfirmation, setShowArchiveConfirmation] = useState(false)
-    const [confirmationMessage, setConfirmationMessage] = useState('')
     const [showUndoConfirmation, setShowUndoConfirmation] = useState(false)
+    const [confirmationMessage, setConfirmationMessage] = useState('')
     const [errorMessage, setErrorMessage] = useState('')
     const [viewMode, setViewMode] = useState('active')
     const [formData, setFormData] = useState({
@@ -260,6 +262,26 @@ function Sales({ Toggle }) {
         }
     }
 
+    const handleDelete = (id) => {
+        setEditSaleId(id);
+        setShowDeleteConfirmation(true)
+    }
+
+    const confirmDelete = async () => {
+        try {
+            await remove(ref(db, 'salesArchive/' + editSaleId))
+            console.log('Sale with ID ', editSaleId, ' successfully deleted from archive')
+
+            setConfirmationMessage('Sale deleted successfully.')
+            setSales((prevSales) => prevSales.filter((sale) => sale.key !== editSaleId))
+        } catch (error) {
+            setErrorMessage('Error deleting sale from archive.')
+            console.error('Error deleting sale from archive: ', error)
+        } finally {
+            setEditSaleId('')
+            setShowDeleteConfirmation(false)
+        }
+    }
     
     return (
         <div className='px-3'>
@@ -330,36 +352,42 @@ function Sales({ Toggle }) {
                                     </thead>
                                     <tbody className='table-striped'>
                                     {sales
-                                        .filter(sale => {
-                                            const saleDataString = Object.values(sale).join(' ').toLowerCase()
-                                            return saleDataString.includes(searchQuery.toLowerCase())
-                                        })
-                                        .slice().sort((a, b) => new Date(b.dateTime) - new Date(a.dateTime))
-                                        .map(sale => (
-                                            <tr key={sale.key}>
-                                                <td>{sale.key}</td>
-                                                <td>
-                                                    {sale.products.map((product, index) => (
-                                                        <div key={index}>
-                                                            <p>{product.productName}</p>
-                                                        </div>
-                                                    ))}
-                                                </td>
-                                                <td>
-                                                    {sale.products.map((product, index) => (
-                                                        <div key={index}>
-                                                            <p>{product.quantity}</p>
-                                                        </div>
-                                                    ))}
-                                                </td>
-                                                <td>{sale.totalPrice.toFixed(2)}</td>
-                                                <td>{sale.dateTime}</td>
-                                                <td>
-                                                    <button onClick={() => handleUndo(sale.key)} className="btn btn-success me-2">Undo</button>
-                                                    <button onClick={() => handleArchive(sale.key)} className="btn btn-danger">Archive</button>
-                                                </td>
-                                            </tr>
-                                        ))}
+                                    .filter(sale => {
+                                        const saleDataString = Object.values(sale).join(' ').toLowerCase()
+                                        return saleDataString.includes(searchQuery.toLowerCase())
+                                    })
+                                    .slice().sort((a, b) => new Date(b.dateTime) - new Date(a.dateTime))
+                                    .map(sale => (
+                                        <tr key={sale.key}>
+                                            <td>{sale.key}</td>
+                                            <td>
+                                                {sale.products.map((product, index) => (
+                                                    <div key={index}>
+                                                        <p>{product.productName}</p>
+                                                    </div>
+                                                ))}
+                                            </td>
+                                            <td>
+                                                {sale.products.map((product, index) => (
+                                                    <div key={index}>
+                                                        <p>{product.quantity}</p>
+                                                    </div>
+                                                ))}
+                                            </td>
+                                            <td>{sale.totalPrice.toFixed(2)}</td>
+                                            <td>{sale.dateTime}</td>
+                                            <td>
+                                                {viewMode === 'archive' ? (
+                                                    <button onClick={() => handleDelete(sale.key)} className="btn btn-danger">Delete</button>
+                                                ) : (
+                                                    <>
+                                                        <button onClick={() => handleUndo(sale.key)} className="btn btn-success me-2">Undo</button>
+                                                        <button onClick={() => handleArchive(sale.key)} className="btn btn-danger">Archive</button>
+                                                    </>
+                                                )}
+                                            </td>
+                                        </tr>
+                                    ))}
                                 </tbody>
                                 </table>
                             </div>
@@ -424,45 +452,32 @@ function Sales({ Toggle }) {
             </div>
             )}
 
-            {showArchiveConfirmation && (
-                <div className="modal fade show d-block" id="deleteConfirmationModal" style={{ display: 'block', backgroundColor: 'rgba(0, 0, 0, 0.5)' }}>
-                    <div className="modal-dialog modal-dialog-centered">
-                        <div className="modal-content">
-                            <div className="modal-header">
-                                <h5 className="modal-title">Confirm Archive</h5>
-                                <button type="button" className="btn-close" onClick={() => setShowArchiveConfirmation(false)} aria-label="Close"></button>
-                            </div>
-                            <div className="modal-body">
-                                Are you sure you want to archive this sale?
-                            </div>
-                            <div className="modal-footer">
-                                <button type="button" className="btn btn-secondary" onClick={() => setShowArchiveConfirmation(false)}>Cancel</button>
-                                <button type="button" className="btn btn-danger" onClick={() => confirmArchive(editSaleId)}>Archive</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            )}
+            <ConfirmationModal
+                show={showArchiveConfirmation}
+                onClose={() => setShowArchiveConfirmation(false)}
+                onConfirm={() => confirmArchive(editSaleId)}
+                title="Confirm Archive"
+                message="Are you sure you want to archive this sale?"
+                confirmButtonText="Archive"
+            />
 
-            {showUndoConfirmation && (
-                <div className="modal fade show d-block" id="undoConfirmationModal" style={{ display: 'block', backgroundColor: 'rgba(0, 0, 0, 0.5)' }}>
-                    <div className="modal-dialog modal-dialog-centered">
-                        <div className="modal-content">
-                            <div className="modal-header">
-                                <h5 className="modal-title">Confirm Undo</h5>
-                                <button type="button" className="btn-close" onClick={() => setShowUndoConfirmation(false)} aria-label="Close"></button>
-                            </div>
-                            <div className="modal-body">
-                                Undo this sale and restore inventory quantities?
-                            </div>
-                            <div className="modal-footer">
-                                <button type="button" className="btn btn-secondary" onClick={() => setShowUndoConfirmation(false)}>Cancel</button>
-                                <button type="button" className="btn btn-success" onClick={confirmUndo}>Undo</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            )}
+            <ConfirmationModal
+                show={showUndoConfirmation}
+                onClose={() => setShowUndoConfirmation(false)}
+                onConfirm={confirmUndo}
+                title="Confirm Undo"
+                message="Undo this sale and restore inventory quantities?"
+                confirmButtonText="Undo"
+            />
+
+            <ConfirmationModal
+                show={showDeleteConfirmation}
+                onClose={() => setShowDeleteConfirmation(false)}
+                onConfirm={confirmDelete}
+                title="Confirm Delete"
+                message="Are you sure you want to delete this sale?"
+                confirmButtonText="Delete"
+            />
         </div>
     )
 }
