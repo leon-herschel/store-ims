@@ -1,4 +1,4 @@
-import Nav from '../Nav'
+import Nav from '../Components/Navigation/Nav'
 import { useState, useEffect } from 'react'
 import { ref, onValue, remove, update, serverTimestamp } from 'firebase/database'
 import { db } from '../firebaseConfig'

@@ -1,7 +1,7 @@
 import 'bootstrap/js/dist/dropdown'
 import 'bootstrap/js/dist/collapse'
 import { Link, useNavigate } from 'react-router-dom'
-import { useAuth } from './Components/Login/AuthContext'
+import { useAuth } from '../Login/AuthContext'
 
 function Nav({ Toggle, pageTitle }) {
   const { currentUser } = useAuth()

@@ -1,6 +1,6 @@
-import Nav from '../Nav'
+import Nav from '../Components/Navigation/Nav'
 import { useState, useEffect } from 'react'
-import { ref, onValue, remove, update, set } from 'firebase/database'
+import { ref, onValue, remove, update, set, push} from 'firebase/database'
 import { db } from '../firebaseConfig'
 
 function Sales({ Toggle }) {
@@ -10,17 +10,18 @@ function Sales({ Toggle }) {
     const [loading, setLoading] = useState(true)
     const [editSaleId, setEditSaleId] = useState('')
     const [searchQuery, setSearchQuery] = useState('')
-    const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false)
+    const [showArchiveConfirmation, setShowArchiveConfirmation] = useState(false)
     const [confirmationMessage, setConfirmationMessage] = useState('')
     const [showUndoConfirmation, setShowUndoConfirmation] = useState(false)
     const [errorMessage, setErrorMessage] = useState('')
+    const [viewMode, setViewMode] = useState('active')
     const [formData, setFormData] = useState({
         products: [], 
         totalPrice: 0, 
       })
 
-    useEffect(() => {
-        const salesRef = ref(db, 'sales')
+      useEffect(() => {
+        const salesRef = ref(db, viewMode === 'active' ? 'sales' : 'salesArchive')
         const productsRef = ref(db, 'products')
 
         const unsubscribeSales = onValue(salesRef, (snapshot) => {
@@ -56,7 +57,7 @@ function Sales({ Toggle }) {
             unsubscribeSales()
             unsubscribeProducts()
         }
-    }, [])
+    }, [viewMode])
 
     const getCurrentDateTime = () => {
         const currentDate = new Date()
@@ -131,27 +132,6 @@ function Sales({ Toggle }) {
             })
         } catch (err) {
             console.error('Error adding/updating sale: ', err)
-        }
-    }
-
-    const handleDelete = (id) => {
-        setEditSaleId(id)
-        setShowDeleteConfirmation(true)
-    }
-
-    const confirmDelete = async () => {
-        try {
-            await remove(ref(db, 'sales/' + editSaleId))
-            setConfirmationMessage('Sale deleted successfully.')
-            console.log('Sale with ID ', editSaleId, ' successfully deleted')
-
-            setSales((prevSales) => prevSales.filter((sale) => sale.key !== editSaleId))
-        } catch (error) {
-            setErrorMessage('Error deleting sale.')
-            console.error('Error deleting sale: ', error)
-        } finally {
-            setEditSaleId('')
-            setShowDeleteConfirmation(false)
         }
     }
 
@@ -250,6 +230,36 @@ function Sales({ Toggle }) {
             setShowUndoConfirmation(false)
         }
     }
+
+    const handleArchive = (id) => {
+        setEditSaleId(id)
+        setShowArchiveConfirmation(true)
+    }
+
+    const confirmArchive = async () => {
+    try {
+        const saleToArchive = sales.find((sale) => sale.key === editSaleId)
+
+        if (saleToArchive) {
+            const archiveSaleRef = ref(db, `salesArchive/${editSaleId}`)
+            const { key, ...saleDataWithoutKey } = saleToArchive
+            await set(archiveSaleRef, saleDataWithoutKey)
+            await remove(ref(db, `sales/${editSaleId}`))
+
+            setConfirmationMessage('Sale archived successfully.')
+            setSales((prevSales) => prevSales.filter((sale) => sale.key !== editSaleId))
+        } else {
+            console.error('Sale not found with ID:', editSaleId)
+        }
+        } catch (error) {
+            console.error('Error archiving sale: ', error)
+            setErrorMessage('Error archiving sale.')
+        } finally {
+            setEditSaleId('')
+            setShowArchiveConfirmation(false)
+        }
+    }
+
     
     return (
         <div className='px-3'>
@@ -282,7 +292,19 @@ function Sales({ Toggle }) {
                             ) : null}
                             </div>
                             <div className="col-6 d-flex justify-content-end">
-                                <div className="w-50">
+                            <div className="row">
+                                <div className="col-12">
+                                        <select
+                                            className="form-select"
+                                            value={viewMode}
+                                            onChange={(e) => setViewMode(e.target.value)}
+                                        >
+                                            <option value="active">Active Sales</option>
+                                            <option value="archive">Archived Sales</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div className="w-50 ms-2">
                                     <input 
                                         type="text" 
                                         className="form-control me-2" 
@@ -334,7 +356,7 @@ function Sales({ Toggle }) {
                                                 <td>{sale.dateTime}</td>
                                                 <td>
                                                     <button onClick={() => handleUndo(sale.key)} className="btn btn-success me-2">Undo</button>
-                                                    <button onClick={() => handleDelete(sale.key)} className="btn btn-danger">Delete</button>
+                                                    <button onClick={() => handleArchive(sale.key)} className="btn btn-danger">Archive</button>
                                                 </td>
                                             </tr>
                                         ))}
@@ -402,20 +424,20 @@ function Sales({ Toggle }) {
             </div>
             )}
 
-            {showDeleteConfirmation && (
+            {showArchiveConfirmation && (
                 <div className="modal fade show d-block" id="deleteConfirmationModal" style={{ display: 'block', backgroundColor: 'rgba(0, 0, 0, 0.5)' }}>
                     <div className="modal-dialog modal-dialog-centered">
                         <div className="modal-content">
                             <div className="modal-header">
-                                <h5 className="modal-title">Confirm Deletion</h5>
-                                <button type="button" className="btn-close" onClick={() => setShowDeleteConfirmation(false)} aria-label="Close"></button>
+                                <h5 className="modal-title">Confirm Archive</h5>
+                                <button type="button" className="btn-close" onClick={() => setShowArchiveConfirmation(false)} aria-label="Close"></button>
                             </div>
                             <div className="modal-body">
-                                Are you sure you want to delete this sale?
+                                Are you sure you want to archive this sale?
                             </div>
                             <div className="modal-footer">
-                                <button type="button" className="btn btn-secondary" onClick={() => setShowDeleteConfirmation(false)}>Cancel</button>
-                                <button type="button" className="btn btn-danger" onClick={confirmDelete}>Delete</button>
+                                <button type="button" className="btn btn-secondary" onClick={() => setShowArchiveConfirmation(false)}>Cancel</button>
+                                <button type="button" className="btn btn-danger" onClick={() => confirmArchive(editSaleId)}>Archive</button>
                             </div>
                         </div>
                     </div>

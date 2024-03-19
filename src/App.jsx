@@ -1,13 +1,12 @@
 import './App.css'
 import 'bootstrap/dist/css/bootstrap.min.css'
 import 'bootstrap-icons/font/bootstrap-icons.css'
-import Sidebar from './Sidebar'
+import Sidebar from './Components/Navigation/Sidebar'
 import Home from './Pages/Home'
 import Products from './Pages/Products'
 import Inventory from './Pages/Inventory'
 import Sales from './Pages/Sales'
 import Users from './Pages/Users'
-import Settings from './Pages/Settings'
 import Reports from './Pages/Reports'
 import Login from './Components/Login/Login'
 import { useState } from 'react'
@@ -15,6 +14,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import Private from './Components/Login/Private'
 import PageNotFound from './Pages/NotFound'
 import { AuthProvider } from './Components/Login/AuthContext'
+import SalesArchive from './Pages/SalesArchive'
 
 function App() {
   const [toggle, setToggle] = useState(true)

@@ -1,7 +1,7 @@
 import { ref, update, get } from 'firebase/database'
 import { db } from '../firebaseConfig'
 import { useState, useEffect } from 'react'
-import Nav from '../Nav'
+import Nav from '../Components/Navigation/Nav'
 
 function Inventory({ Toggle }) {
     const [products, setProducts] = useState([])

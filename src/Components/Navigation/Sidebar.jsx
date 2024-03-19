@@ -1,7 +1,7 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom' 
 import './Sidebar.css'
-import logo from './assets/logo.svg'
-import { auth } from './firebaseConfig'
+import logo from '../../assets/logo.svg'
+import { auth } from '../../firebaseConfig'
 
 function Sidebar() {
   const location = useLocation()

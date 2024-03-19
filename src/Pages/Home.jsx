@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react'
 import LineChart from '../Components/Charts/LineChart'
-import PieChart from '../Components/Charts/PieChart'
-import Nav from '../Nav'
+import Nav from '../Components/Navigation/Nav'
 import { db } from '../firebaseConfig'
 import { ref, onValue } from 'firebase/database'
 import { useNavigate, Link } from 'react-router-dom'
