@@ -85,6 +85,9 @@ function Sales({ Toggle }) {
         e.preventDefault();
     
         try {
+            if (formData.products.length === 0) {
+                return setErrorMessage('Please select at least one product.')
+            }
             const saleKey = generateSaleKey()
             const salesRef = ref(db, `sales/${saleKey}`)
             const productsRef = ref(db, 'products')
@@ -99,11 +102,11 @@ function Sales({ Toggle }) {
                 const selectedProduct = products.find((product) => product.name === productItem.productName)
     
                 if (!selectedProduct) {
-                    throw new Error('Selected product not found.')
+                    return setErrorMessage('Selected product not found.')
                 }
     
                 if (productItem.quantity > selectedProduct.quantity) {
-                    throw new Error('Quantity exceeds available inventory.')
+                    return setErrorMessage('Quantity exceeds available inventory.')
                 }
     
                 saleData.products.push({
@@ -131,7 +134,6 @@ function Sales({ Toggle }) {
             })
             setDateTime(getCurrentDateTime())
         } catch (err) {
-            setErrorMessage(err.message)
             console.error('Error adding/updating sale: ', err)
         }
     }
@@ -223,22 +225,38 @@ function Sales({ Toggle }) {
     }
 
     const handleAddProduct = () => {
-        const newProductName = document.querySelector('[name="newProductName"]').value;
-        const newQuantity = parseInt(document.querySelector('[name="newQuantity"]').value, 10);
+        const newProductName = document.querySelector('[name="newProductName"]').value
+        const newQuantity = parseInt(document.querySelector('[name="newQuantity"]').value, 10)
       
         if (!newProductName || !newQuantity) {
-          return; // Handle empty input fields (optional)
+          return setErrorMessage('Please fill in all required fields.')
+        }
+
+        const selectedProduct = products.find((product) => product.name === newProductName)
+        if (!selectedProduct) {
+            return setErrorMessage('Selected product not found.')
+        }
+
+        if (newQuantity > selectedProduct.quantity) {
+            return setErrorMessage('Quantity exceeds available inventory.')
         }
       
         setFormData((prevData) => ({
           ...prevData,
           products: [...prevData.products, { productName: newProductName, quantity: newQuantity }],
-        }));
+        }))
       
-        // Reset new product input fields (optional)
         document.querySelector('[name="newProductName"]').value = '';
         document.querySelector('[name="newQuantity"]').value = '';
-      };
+      }
+
+      const handleRemoveProduct = (indexToRemove) => {
+        setFormData((prevData) => ({
+            ...prevData,
+            products: prevData.products.filter((_, index) => index !== indexToRemove),
+        }))
+    }
+    
       
 
     return (
@@ -246,12 +264,12 @@ function Sales({ Toggle }) {
             <Nav Toggle={Toggle} pageTitle="Sales"/>
             <div className='px-3 position-relative'>
                 {confirmationMessage && (
-                    <div className="alert alert-success position-absolute top-0 start-50 translate-middle" role="alert">
+                    <div className="alert alert-success position-absolute top-0 start-50 translate-middle" role="alert" style={{ zIndex: 1070 }}>
                         {confirmationMessage}
                     </div>
                 )}
                 {errorMessage && (
-                    <div className="alert alert-danger position-absolute top-0 start-50 translate-middle" role="alert">
+                    <div className="alert alert-danger position-absolute top-0 start-50 translate-middle" role="alert" style={{ zIndex: 1070 }}>
                         {errorMessage}
                     </div>
                 )}
@@ -337,7 +355,7 @@ function Sales({ Toggle }) {
             </section>
 
             {showForm && (
-            <div className="modal fade show d-block" id="saleForm">
+            <div className="modal fade show d-block" id="saleForm" style={{ display: 'block', backgroundColor: 'rgba(0, 0, 0, 0.5)' }}>
                 <div className="modal-dialog modal-dialog-centered">
                 <div className="modal-content">
                     <div className="modal-header">
@@ -347,37 +365,33 @@ function Sales({ Toggle }) {
                     <div className="modal-body d-flex justify-content-center align-items-center">
                     <form onSubmit={handleAdd} className="w-75">
                         {formData.products.map((productItem, index) => (
-                        <div key={index} className="mb-3">
-                            <select
-                            name={`productName_${index}`} // Unique name for each product
-                            value={productItem.productName}
-                            onChange={handleChange}
-                            className="form-select"
-                            required
-                            >
-                            <option value="">Select Product</option>
-                            {products.map((product) => (
-                                <option key={product.key} value={product.name}>
-                                {product.name}
-                                </option>
-                            ))}
-                            </select>
+                            <div key={index} className="mb-3 d-flex align-items-center">
+                            <div className="flex-grow-1 me-2 w-75">
+                                <div className="form-control w-100">{productItem.productName}</div>
+                            </div>
                             <input
-                            type="number"
-                            name={`quantity_${index}`} // Unique name for each quantity
-                            value={productItem.quantity}
-                            onChange={handleChange}
-                            className="form-control mb-3"
-                            placeholder="Quantity"
-                            required
+                                type="number"
+                                name={`quantity_${index}`}
+                                value={productItem.quantity}
+                                onChange={handleChange}
+                                className="form-control me-2"
+                                placeholder="Quantity"
+                                required
                             />
+                            <button
+                                type="button"
+                                className="btn btn-danger"
+                                onClick={() => handleRemoveProduct(index)}
+                                data-bs-toggle="tooltip"
+                                data-bs-placement="top"
+                                title="Remove Product"
+                            >
+                                <i className="bi bi-trash" />
+                            </button>
                         </div>
                         ))}
-                        {formData.products.length == 0 && ( 
-                        <p className='text-danger'>Add products to sell.</p>
-                        )}
                         <div className="d-flex mb-3">
-                        <select name="newProductName" className="form-select me-2" required>
+                        <select name="newProductName" className="form-select me-2" >
                             <option value="">Select Product</option>
                             {products.map((product) => (
                             <option key={product.key} value={product.name}>
@@ -385,9 +399,9 @@ function Sales({ Toggle }) {
                             </option>
                             ))}
                         </select>
-                        <input type="number" name="newQuantity" className="form-control" placeholder="Quantity" required />
-                        <button type="button" className="btn btn-success ms-2" onClick={handleAddProduct}>
-                            <i className='bi bi-plus fs-5'></i>
+                        <input type="number" name="newQuantity" className="form-control" placeholder="Quantity" />
+                        <button type="button" className="btn btn-success ms-2" onClick={handleAddProduct} data-bs-toggle="tooltip" data-bs-placement="top" title="Add Product">
+                            <i className='bi bi-plus-lg'></i>
                         </button>
                         </div>
                         <div className="d-grid my-3 shadow">
