@@ -108,7 +108,8 @@ function Inventory({ Toggle }) {
     }
 
     const handleQuantityChange = (e) => {
-        setEditQuantity(e.target.value)
+        const newQuantity = parseInt(e.target.value, 10)
+        setEditQuantity(newQuantity)
     }
 
     const handleSearchChange = (e) => {

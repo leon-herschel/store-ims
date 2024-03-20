@@ -102,25 +102,20 @@ function Users({ Toggle }) {
         }
     }
     
-      
     const handleEdit = (id) => {
-        setEditSaleId(id);
-        const saleToEdit = sales.find((sale) => sale.key === id);
-      
-        if (saleToEdit) {
-            const productsForSale = saleToEdit.products ? saleToEdit.products.map(product => ({
-                productName: product.productName,
-                quantity: product.quantity,
-            })) : [];
-        
+        setEditUserId(id)
+        const userToEdit = users.find(user => user.key === id)
+        if (userToEdit) {
             setFormData({
-                products: productsForSale,
-                date: saleToEdit.date,
+                name: userToEdit.name,
+                email: userToEdit.email,
+                access: userToEdit.access,
+                password: userToEdit.password
             });
-            setEditMode(true);
-            setShowForm(true);
+            setEditMode(true)
+            setShowForm(true)
         } else {
-            console.error('Sale not found for ID:', id);
+            console.error("User not found with ID:", id)
         }
     }
     
