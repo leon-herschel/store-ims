@@ -211,7 +211,7 @@ function Users({ Toggle }) {
                 <>
                 <div className="row d-flex">
                     <div className="col-6">
-                        <button onClick={() => setShowForm(true)} className="btn btn-primary newUser" data-bs-toggle="modal" data-bs-target="#userForm">Add User</button>
+                        <button onClick={() => setShowForm(true)} className="btn btn-primary newUser shadow" data-bs-toggle="modal" data-bs-target="#userForm">Add User</button>
                     </div>
                     <div className="col-6 d-flex justify-content-end">
                         <div className="w-50">

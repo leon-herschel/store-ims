@@ -193,7 +193,7 @@ function Products({ Toggle }) {
                     <>
                         <div className="row d-flex">
                             <div className="col-6">
-                                <button onClick={() => setShowForm(true)} className="btn btn-primary newUser" data-bs-toggle="modal" data-bs-target="#productForm">Add Product</button>
+                                <button onClick={() => setShowForm(true)} className="btn btn-primary newUser shadow" data-bs-toggle="modal" data-bs-target="#productForm">Add Product</button>
                             </div>
                             <div className="col-6 d-flex justify-content-end">
                                 <div className="w-50">
@@ -244,7 +244,7 @@ function Products({ Toggle }) {
             </section>
 
             {showForm && (
-                <div className="modal fade show d-block" id="productForm" style={{ display: 'block', backgroundColor: 'rgba(0, 0, 0, 0.5)' }}>
+                <div className="modal fade show d-block shadow" id="productForm" style={{ display: 'block', backgroundColor: 'rgba(0, 0, 0, 0.5)' }}>
                     <div className="modal-dialog modal-dialog-centered">
                         <div className="modal-content">
                             <div className="modal-header">
@@ -270,7 +270,7 @@ function Products({ Toggle }) {
             )}
 
             {showDeleteConfirmation && (
-                <div className="modal fade show d-block" id="deleteConfirmationModal" style={{ display: 'block', backgroundColor: 'rgba(0, 0, 0, 0.5)' }}>
+                <div className="modal fade show d-block shadow" id="deleteConfirmationModal" style={{ display: 'block', backgroundColor: 'rgba(0, 0, 0, 0.5)' }}>
                     <div className="modal-dialog modal-dialog-centered">
                         <div className="modal-content">
                             <div className="modal-header">

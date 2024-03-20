@@ -1,8 +1,10 @@
 import Nav from '../../Components/Navigation/Nav'
 import ConfirmationModal from './ConfirmationModal'
-import { useState, useEffect } from 'react'
-import { ref, onValue, remove, update, set, push} from 'firebase/database'
+import { useState, useEffect, useRef } from 'react'
+import { ref, onValue, remove, update, set, get} from 'firebase/database'
 import { db } from '../../firebaseConfig'
+import { auth } from '../../firebaseConfig'
+import { signInWithEmailAndPassword } from 'firebase/auth'
 
 function Sales({ Toggle }) {
     const [sales, setSales] = useState([])
@@ -13,53 +15,64 @@ function Sales({ Toggle }) {
     const [searchQuery, setSearchQuery] = useState('')
     const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false)
     const [showArchiveConfirmation, setShowArchiveConfirmation] = useState(false)
+    const [showArchiveAllConfirmation, setShowArchiveAllConfirmation] = useState(false)
     const [showUndoConfirmation, setShowUndoConfirmation] = useState(false)
     const [confirmationMessage, setConfirmationMessage] = useState('')
     const [errorMessage, setErrorMessage] = useState('')
     const [viewMode, setViewMode] = useState('active')
+    const [password, setPassword] = useState('')
+    const passwordRef = useRef(null)
     const [formData, setFormData] = useState({
         products: [], 
         totalPrice: 0, 
       })
 
       useEffect(() => {
-        const salesRef = ref(db, viewMode === 'active' ? 'sales' : 'salesArchive')
-        const productsRef = ref(db, 'products')
+        const fetchData = async () => {
+            setLoading(true)
 
-        const unsubscribeSales = onValue(salesRef, (snapshot) => {
-            if (snapshot.exists()) {
+            const salesSnapshot = await get(ref(db, viewMode === 'active' ? 'sales' : 'salesArchive'))
+            if (salesSnapshot.exists()) {
                 const salesArray = []
-                snapshot.forEach((childSnapshot) => {
+                salesSnapshot.forEach((childSnapshot) => {
                     salesArray.push({
                         key: childSnapshot.key,
                         ...childSnapshot.val()
                     })
                 })
                 setSales(salesArray)
-                setLoading(false)
             } else {
-                setLoading(false)
+                setSales([])
             }
-        })
 
-        const unsubscribeProducts = onValue(productsRef, (snapshot) => {
-            if (snapshot.exists()) {
+            const productsSnapshot = await get(ref(db, 'products'))
+            if (productsSnapshot.exists()) {
                 const productsArray = []
-                snapshot.forEach((childSnapshot) => {
+                productsSnapshot.forEach((childSnapshot) => {
                     productsArray.push({
                         key: childSnapshot.key,
                         ...childSnapshot.val()
                     })
                 })
                 setProducts(productsArray)
+            } else {
+                setProducts([])
             }
-        })
 
-        return () => {
-            unsubscribeSales()
-            unsubscribeProducts()
+            setLoading(false)
         }
+
+        fetchData()
     }, [viewMode])
+
+    const handleViewModeChange = (e) => {
+        setViewMode(e.target.value)
+        setSearchQuery('')
+    }
+
+    const handlePasswordChange = (e) => {
+        setPassword(e.target.value)
+    }
 
     const getCurrentDateTime = () => {
         const currentDate = new Date()
@@ -132,6 +145,8 @@ function Sales({ Toggle }) {
                 products: [],
                 totalPrice: 0,
             })
+
+            setSales((prevSales) => [...prevSales, { key: saleKey, ...saleData }])
         } catch (err) {
             console.error('Error adding/updating sale: ', err)
         }
@@ -282,6 +297,41 @@ function Sales({ Toggle }) {
             setShowDeleteConfirmation(false)
         }
     }
+
+    const handleArchiveAll = () => {
+        setShowArchiveAllConfirmation(true)
+    }
+
+    const confirmArchiveAll = async () => {
+        try {
+            const currentUser = auth.currentUser
+    
+            if (!currentUser) {
+                console.error('No user is logged in.')
+                return
+            }
+    
+            await signInWithEmailAndPassword(auth, currentUser.email, password)
+    
+            for (const sale of sales) {
+                const archiveSaleRef = ref(db, `salesArchive/${sale.key}`)
+                const { key, ...saleDataWithoutKey } = sale
+                await set(archiveSaleRef, saleDataWithoutKey)
+                await remove(ref(db, `sales/${sale.key}`))
+            }
+    
+            setConfirmationMessage('All active sales archived successfully.')
+            setSales([])
+            setShowArchiveAllConfirmation(false)
+    
+        } catch (error) {
+            console.error('Error archiving all sales: ', error)
+            setErrorMessage('Incorrect password. Please try again.')
+        } finally {
+            setPassword('')
+            passwordRef.current.value = ''
+        }
+    }
     
     return (
         <div className='px-3'>
@@ -309,9 +359,14 @@ function Sales({ Toggle }) {
                     <>
                         <div className="row d-flex">
                             <div className="col-6">
-                            {formData ? (
-                                <button onClick={() => setShowForm(true)} className="btn btn-primary newUser" data-bs-toggle="modal" data-bs-target="#saleForm">Add Sale</button>
+                            {viewMode === 'active' && formData ? (
+                                <button onClick={() => setShowForm(true)} className="btn btn-primary newUser me-2 shadow" data-bs-toggle="modal" data-bs-target="#saleForm">Add Sale</button>
                             ) : null}
+                            {viewMode === 'active' && (
+                                <button onClick={handleArchiveAll} className="btn btn-danger me-2 shadow">
+                                    Archive All
+                                </button>
+                            )}
                             </div>
                             <div className="col-6 d-flex justify-content-end">
                             <div className="row">
@@ -319,7 +374,7 @@ function Sales({ Toggle }) {
                                         <select
                                             className="form-select"
                                             value={viewMode}
-                                            onChange={(e) => setViewMode(e.target.value)}
+                                            onChange={handleViewModeChange}
                                         >
                                             <option value="active">Active Sales</option>
                                             <option value="archive">Archived Sales</option>
@@ -330,7 +385,7 @@ function Sales({ Toggle }) {
                                     <input 
                                         type="text" 
                                         className="form-control me-2" 
-                                        placeholder="Search" 
+                                        placeholder="Search"
                                         value={searchQuery} 
                                         onChange={handleSearchChange} 
                                     />
@@ -450,6 +505,38 @@ function Sales({ Toggle }) {
                 </div>
                 </div>
             </div>
+            )}
+
+            {showArchiveAllConfirmation && (
+                <div className="modal fade show d-block" id="archiveAllModal" style={{ display: 'block', backgroundColor: 'rgba(0, 0, 0, 0.5)' }}>
+                    <div className="modal-dialog modal-dialog-centered">
+                        <div className="modal-content">
+                            <div className="modal-header">
+                                <h5 className="modal-title">Confirm Archive All</h5>
+                                <button type="button" className="btn-close" onClick={() => setShowArchiveAllConfirmation(false)} aria-label="Close"></button>
+                            </div>
+                            <div className="modal-body">
+                                <p>To proceed with archiving all active sales, please confirm your action by entering your password:</p>
+                                <div className="form-group">
+                                    <input
+                                        type="password"
+                                        className="form-control"
+                                        id="password"
+                                        ref={passwordRef}
+                                        value={password}
+                                        autocomplete="new-password"
+                                        onChange={handlePasswordChange}
+                                        required
+                                    />
+                                </div>
+                            </div>
+                            <div className="modal-footer">
+                                <button type="button" className="btn btn-secondary" onClick={() => setShowArchiveAllConfirmation(false)}>Cancel</button>
+                                <button type="button" className="btn btn-danger" onClick={confirmArchiveAll}>Archive All</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             )}
 
             <ConfirmationModal
