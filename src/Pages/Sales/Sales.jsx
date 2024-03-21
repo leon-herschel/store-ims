@@ -1,10 +1,8 @@
 import Nav from '../../Components/Navigation/Nav'
 import ConfirmationModal from './ConfirmationModal'
-import { useState, useEffect, useRef } from 'react'
-import { ref, onValue, remove, update, set, get} from 'firebase/database'
+import { useState, useEffect} from 'react'
+import { ref, remove, update, set, get} from 'firebase/database'
 import { db } from '../../firebaseConfig'
-import { auth } from '../../firebaseConfig'
-import { signInWithEmailAndPassword } from 'firebase/auth'
 
 function Sales({ Toggle }) {
     const [sales, setSales] = useState([])
@@ -15,14 +13,17 @@ function Sales({ Toggle }) {
     const [searchQuery, setSearchQuery] = useState('')
     const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false)
     const [showArchiveConfirmation, setShowArchiveConfirmation] = useState(false)
-    const [showArchiveAllConfirmation, setShowArchiveAllConfirmation] = useState(false)
     const [showUndoConfirmation, setShowUndoConfirmation] = useState(false)
     const [showUnarchiveConfirmation, setShowUnarchiveConfirmation] = useState(false)
     const [confirmationMessage, setConfirmationMessage] = useState('')
     const [errorMessage, setErrorMessage] = useState('')
     const [viewMode, setViewMode] = useState('active')
-    const [password, setPassword] = useState('')
-    const passwordRef = useRef(null)
+    const [showDeleteByDateModal, setShowDeleteByDateModal] = useState(false)
+    const [startDate, setStartDate] = useState('')
+    const [endDate, setEndDate] = useState('')
+    const [archiveStartDate, setArchiveStartDate] = useState('')
+    const [archiveEndDate, setArchiveEndDate] = useState('')
+    const [showArchiveByDateModal, setShowArchiveByDateModal] = useState(false)
     const [formData, setFormData] = useState({
         products: [], 
         totalPrice: 0, 
@@ -69,10 +70,6 @@ function Sales({ Toggle }) {
     const handleViewModeChange = (e) => {
         setViewMode(e.target.value)
         setSearchQuery('')
-    }
-
-    const handlePasswordChange = (e) => {
-        setPassword(e.target.value)
     }
 
     const getCurrentDateTime = () => {
@@ -299,41 +296,6 @@ function Sales({ Toggle }) {
         }
     }
 
-    const handleArchiveAll = () => {
-        setShowArchiveAllConfirmation(true)
-    }
-
-    const confirmArchiveAll = async () => {
-        try {
-            const currentUser = auth.currentUser
-    
-            if (!currentUser) {
-                console.error('No user is logged in.')
-                return
-            }
-    
-            await signInWithEmailAndPassword(auth, currentUser.email, password)
-    
-            for (const sale of sales) {
-                const archiveSaleRef = ref(db, `salesArchive/${sale.key}`)
-                const { key, ...saleDataWithoutKey } = sale
-                await set(archiveSaleRef, saleDataWithoutKey)
-                await remove(ref(db, `sales/${sale.key}`))
-            }
-    
-            setConfirmationMessage('All active sales archived successfully.')
-            setSales([])
-            setShowArchiveAllConfirmation(false)
-    
-        } catch (error) {
-            console.error('Error archiving all sales: ', error)
-            setErrorMessage('Incorrect password. Please try again.')
-        } finally {
-            setPassword('')
-            passwordRef.current.value = ''
-        }
-    }
-
     const handleUnarchive = (id) => {
         setEditSaleId(id)
         setShowUnarchiveConfirmation(true)
@@ -365,6 +327,62 @@ function Sales({ Toggle }) {
         }
     }
     
+    const handleDeleteByDateRange = async () => {
+        try {
+            const salesToDelete = sales.filter((sale) => {
+                const saleDate = new Date(sale.dateTime)
+                const startDateObj = new Date(startDate)
+                const endDateObj = new Date(endDate)
+    
+                // Set time component of the dates to midnight
+                startDateObj.setHours(0, 0, 0, 0)
+                endDateObj.setHours(23, 59, 59, 999)
+    
+                return saleDate >= startDateObj && saleDate <= endDateObj
+            })
+    
+            for (const sale of salesToDelete) {
+                await remove(ref(db, `salesArchive/${sale.key}`))
+            }
+
+            setConfirmationMessage('Sales deleted successfully.')
+            setSales((prevSales) => prevSales.filter((sale) => !salesToDelete.find((s) => s.key === sale.key)))
+            
+        } catch (error) {
+            console.error('Error deleting data by date range:', error)
+        } finally {
+            setShowDeleteByDateModal(false)
+        }
+    }
+    
+    const handleArchiveByDateRange = async () => {
+        try {
+            const salesToArchive = sales.filter((sale) => {
+                const saleDate = new Date(sale.dateTime)
+                const startDateObj = new Date(archiveStartDate)
+                const endDateObj = new Date(archiveEndDate)
+    
+                startDateObj.setHours(0, 0, 0, 0)
+                endDateObj.setHours(23, 59, 59, 999)
+    
+                return saleDate >= startDateObj && saleDate <= endDateObj
+            })
+    
+            for (const sale of salesToArchive) {
+                const archiveSaleRef = ref(db, `salesArchive/${sale.key}`)
+                const { key, ...saleDataWithoutKey } = sale
+                await set(archiveSaleRef, saleDataWithoutKey)
+                await remove(ref(db, `sales/${sale.key}`))
+            }
+    
+            setConfirmationMessage('Sales archived successfully.')
+            setSales((prevSales) => prevSales.filter((sale) => !salesToArchive.find((s) => s.key === sale.key)))
+        } catch (error) {
+            console.error('Error archiving sales by date range:', error)
+        } finally {
+            setShowArchiveByDateModal(false)
+        }
+    }
     
     return (
         <div className='px-3'>
@@ -395,9 +413,13 @@ function Sales({ Toggle }) {
                             {viewMode === 'active' && formData ? (
                                 <button onClick={() => setShowForm(true)} className="btn btn-primary newUser me-2 shadow" data-bs-toggle="modal" data-bs-target="#saleForm">Add Sale</button>
                             ) : null}
-                            {viewMode === 'active' && (
-                                <button onClick={handleArchiveAll} className="btn btn-danger me-2 shadow">
-                                    Archive All
+                            {viewMode === 'active' ? (
+                                <button onClick={() => setShowArchiveByDateModal(true)} className="btn btn-danger me-2 shadow">
+                                    Archive by Date
+                                </button>
+                            ) : (
+                                <button onClick={() => setShowDeleteByDateModal(true)} className="btn btn-danger me-2 shadow">
+                                    Delete by Date
                                 </button>
                             )}
                             </div>
@@ -543,32 +565,95 @@ function Sales({ Toggle }) {
             </div>
             )}
 
-            {showArchiveAllConfirmation && (
-                <div className="modal fade show d-block" id="archiveAllModal" style={{ display: 'block', backgroundColor: 'rgba(0, 0, 0, 0.5)' }}>
-                    <div className="modal-dialog modal-dialog-centered">
-                        <div className="modal-content">
-                            <div className="modal-header">
-                                <h5 className="modal-title">Confirm Archive All</h5>
-                                <button type="button" className="btn-close" onClick={() => setShowArchiveAllConfirmation(false)} aria-label="Close"></button>
+            {showArchiveByDateModal && (
+                <div className='modal fade show d-block' style={{ display: 'block', backgroundColor: 'rgba(0, 0, 0, 0.5)' }}>
+                    <div className='modal-dialog modal-dialog-centered'>
+                        <div className='modal-content'>
+                            <div className='modal-header'>
+                                <h5 className='modal-title'>Select Date Range</h5>
+                                <button type='button' className='btn-close' onClick={() => setShowArchiveByDateModal(false)} aria-label='Close'></button>
                             </div>
-                            <div className="modal-body">
-                                <p>To proceed with archiving all active sales, please confirm your action by entering your password:</p>
-                                <div className="form-group">
+                            <div className='modal-body'>
+                                <div className='form-group'>
+                                    <label htmlFor='archiveStartDate'>Start Date:</label>
                                     <input
-                                        type="password"
+                                        type='date'
                                         className="form-control"
-                                        id="password"
-                                        ref={passwordRef}
-                                        value={password}
-                                        autocomplete="new-password"
-                                        onChange={handlePasswordChange}
-                                        required
+                                        id='archiveStartDate'
+                                        value={archiveStartDate}
+                                        onChange={(e) => setArchiveStartDate(e.target.value)}
+                                    />
+                                </div>
+                                <div className='form-group'>
+                                    <label htmlFor='archiveEndDate'>End Date:</label>
+                                    <input
+                                        type='date'
+                                        className="form-control"
+                                        id='archiveEndDate'
+                                        value={archiveEndDate}
+                                        onChange={(e) => setArchiveEndDate(e.target.value)}
                                     />
                                 </div>
                             </div>
-                            <div className="modal-footer">
-                                <button type="button" className="btn btn-secondary" onClick={() => setShowArchiveAllConfirmation(false)}>Cancel</button>
-                                <button type="button" className="btn btn-danger" onClick={confirmArchiveAll}>Archive All</button>
+                            <div className='modal-footer'>
+                                <button type='button' className='btn btn-secondary' onClick={() => setShowArchiveByDateModal(false)}>Close</button>
+                                <button type='button' className='btn btn-danger' onClick={handleArchiveByDateRange}>Archive</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}                   
+
+            {showDeleteByDateModal && (
+                <div className='modal fade show d-block' style={{ display: 'block', backgroundColor: 'rgba(0, 0, 0, 0.5)' }}>
+                    <div className='modal-dialog modal-dialog-centered'>
+                        <div className='modal-content'>
+                            <div className='modal-header'>
+                                <h5 className='modal-title'>Select Date Range</h5>
+                                <button
+                                    type='button'
+                                    className='btn-close'
+                                    onClick={() => setShowDeleteByDateModal(false)}
+                                    aria-label='Close'
+                                ></button>
+                            </div>
+                            <div className='modal-body'>
+                                <div className='form-group'>
+                                    <label htmlFor='startDate'>Start Date:</label>
+                                    <input
+                                        type='date'
+                                        className="form-control"
+                                        id='startDate'
+                                        value={startDate}
+                                        onChange={(e) => setStartDate(e.target.value)}
+                                    />
+                                </div>
+                                <div className='form-group'>
+                                    <label htmlFor='endDate'>End Date:</label>
+                                    <input
+                                        type='date'
+                                        className="form-control"
+                                        id='endDate'
+                                        value={endDate}
+                                        onChange={(e) => setEndDate(e.target.value)}
+                                    />
+                                </div>
+                            </div>
+                            <div className='modal-footer'>
+                                <button
+                                    type='button'
+                                    className='btn btn-secondary'
+                                    onClick={() => setShowDeleteByDateModal(false)}
+                                >
+                                    Close
+                                </button>
+                                <button
+                                    type='button'
+                                    className='btn btn-danger'
+                                    onClick={handleDeleteByDateRange}
+                                >
+                                    Delete
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -608,8 +693,9 @@ function Sales({ Toggle }) {
                 onConfirm={confirmUnarchive}
                 title="Confirm Unarchive"
                 message="Are you sure you want to unarchive this sale?"
-                confirmButtonText="Unarchive"
+                confirmButtonText="Unarchive" 
             />
+
         </div>
     )
 }
