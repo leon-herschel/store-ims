@@ -17,6 +17,7 @@ function Sales({ Toggle }) {
     const [showArchiveConfirmation, setShowArchiveConfirmation] = useState(false)
     const [showArchiveAllConfirmation, setShowArchiveAllConfirmation] = useState(false)
     const [showUndoConfirmation, setShowUndoConfirmation] = useState(false)
+    const [showUnarchiveConfirmation, setShowUnarchiveConfirmation] = useState(false)
     const [confirmationMessage, setConfirmationMessage] = useState('')
     const [errorMessage, setErrorMessage] = useState('')
     const [viewMode, setViewMode] = useState('active')
@@ -332,6 +333,38 @@ function Sales({ Toggle }) {
             passwordRef.current.value = ''
         }
     }
+
+    const handleUnarchive = (id) => {
+        setEditSaleId(id)
+        setShowUnarchiveConfirmation(true)
+    }
+
+    const confirmUnarchive = async () => {
+        try {
+            const saleToUnarchive = sales.find((sale) => sale.key === editSaleId)
+    
+            if (saleToUnarchive) {
+                const salesRef = ref(db, `sales/${editSaleId}`)
+                const { key, ...saleDataWithoutKey } = saleToUnarchive
+                await set(salesRef, saleDataWithoutKey)
+    
+                const archiveSaleRef = ref(db, `salesArchive/${editSaleId}`)
+                await remove(archiveSaleRef)
+    
+                setConfirmationMessage('Sale restored successfully.')
+                setSales((prevSales) => prevSales.filter((sale) => sale.key !== editSaleId))
+            } else {
+                console.error('Sale not found with ID:', editSaleId)
+            }
+        } catch (error) {
+            console.error('Error restoring sale: ', error)
+            setErrorMessage('Error restoring sale.')
+        } finally {
+            setEditSaleId('')
+            setShowUnarchiveConfirmation(false)
+        }
+    }
+    
     
     return (
         <div className='px-3'>
@@ -433,7 +466,10 @@ function Sales({ Toggle }) {
                                             <td>{sale.dateTime}</td>
                                             <td>
                                                 {viewMode === 'archive' ? (
+                                                    <>
+                                                    <button onClick={() => handleUnarchive(sale.key)} className="btn btn-success me-2">Unarchive</button>
                                                     <button onClick={() => handleDelete(sale.key)} className="btn btn-danger">Delete</button>
+                                                    </>
                                                 ) : (
                                                     <>
                                                         <button onClick={() => handleUndo(sale.key)} className="btn btn-success me-2">Undo</button>
@@ -564,6 +600,15 @@ function Sales({ Toggle }) {
                 title="Confirm Delete"
                 message="Are you sure you want to delete this sale?"
                 confirmButtonText="Delete"
+            />
+
+            <ConfirmationModal
+                show={showUnarchiveConfirmation}
+                onClose={() => setShowUnarchiveConfirmation(false)}
+                onConfirm={confirmUnarchive}
+                title="Confirm Unarchive"
+                message="Are you sure you want to unarchive this sale?"
+                confirmButtonText="Unarchive"
             />
         </div>
     )
