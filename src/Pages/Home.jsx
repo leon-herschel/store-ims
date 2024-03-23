@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import LineChart from '../Components/Charts/LineChart'
+//import LineChart from '../Components/Charts/LineChart'
 import Nav from '../Components/Navigation/Nav'
 import { db } from '../firebaseConfig'
 import { ref, onValue } from 'firebase/database'
@@ -47,7 +47,7 @@ function Home({ Toggle }) {
             if (snapshot.exists()) {
                 const salesData = snapshot.val()
                 const salesCount = Object.keys(salesData).length
-                setSalesCount(salesCount);
+                setSalesCount(salesCount)
             } else {
                 setSalesCount(0)
             }
@@ -71,13 +71,13 @@ function Home({ Toggle }) {
         <div className='px-3'>
             <Nav Toggle={Toggle} pageTitle="Home" />
             {loading ? ( 
-                <div className="d-flex justify-content-center align-items-center" style={{ minHeight: '80vh' }}>
+                <div className="d-flex justify-content-center align-items-center fadein" style={{ minHeight: '80vh' }}>
                     <div className="spinner-border text-light" style={{ width: '3rem', height: '3rem' }}>
                         <span className="visually-hidden">Loading...</span>
                     </div>
                 </div>
             ) : (
-                <div className="container-fluid">
+                <div className="container-fluid fadein">
                     <div className="row g-1 m-1">
                         <div className="col-md-3 py-1 px-2 shadow-sm">
                             <Link to="/products" className="text-decoration-none text-dark">
@@ -145,10 +145,8 @@ function Home({ Toggle }) {
                                     </tr>
                                 ))}
                                 <tr>
-                                    <td colSpan="4" className="text-center p-0">
-                                        <button className="btn" onClick={() => navigate("/inventory")}>
-                                            Show More
-                                        </button>
+                                    <td colSpan="4" className="text-center p-0" role="button" onClick={() => navigate("/inventory")}>
+                                        <i className="bi bi-three-dots fs-5"></i>
                                     </td>
                                 </tr>
                             </tbody>
@@ -156,7 +154,7 @@ function Home({ Toggle }) {
                     </div>
                     <div className="row">
                         <div className="col-12 col-md-8 p-3 my-2">
-                            <LineChart />
+                            {/*<LineChart />*/}
                         </div>
                     </div>
                 </div>

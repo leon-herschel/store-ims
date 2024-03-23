@@ -1,7 +1,6 @@
-import Chart from "chart.js/auto"
 import { Line } from "react-chartjs-2"
 
-const labels = ["January", "February", "March", "April", "May", "June"]
+const labels = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
 
 const data = {
     labels: labels,
@@ -10,7 +9,7 @@ const data = {
             label: "Sales",
             backgroundColor: "rgb(0, 0, 30)",
             borderColor: "rgb(0, 0, 30)",
-            data: [0, 10, 5, 2, 20, 30, 45],
+            data: [33, 44, 46, 40, 50, 38, 45, 44, 36, 52, 43, 49],
         },
     ],
 }

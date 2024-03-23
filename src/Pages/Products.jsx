@@ -171,18 +171,20 @@ function Products({ Toggle }) {
         <div className='px-3'>
             <Nav Toggle={Toggle} pageTitle="Products"/>
             <div className='px-3 position-relative'>
-                {confirmationMessage && (
-                    <div className="alert alert-success position-absolute top-0 start-50 translate-middle" role="alert" style={{ zIndex: 1070 }}>
-                        {confirmationMessage}
-                    </div>
-                )}
-                {errorMessage && (
-                    <div className="alert alert-danger position-absolute top-0 start-50 translate-middle" role="alert" style={{ zIndex: 1070 }}>
-                        {errorMessage}
-                    </div>
-                )}
+                <div className="position-fixed top-1 start-50 translate-middle-x" style={{ zIndex: 1070 }}>
+                    {confirmationMessage && (
+                        <div className="alert alert-success fadein" role="alert">
+                            {confirmationMessage}
+                        </div>
+                    )}
+                    {errorMessage && (
+                        <div className="alert alert-danger fadein" role="alert">
+                            {errorMessage}
+                        </div>
+                    )}
+                </div>
             </div>
-            <section className="p-3">
+            <section className="p-3 fadein">
                 {loading ? (
                     <div className="d-flex justify-content-center align-items-center" style={{ minHeight: '80vh' }}>
                         <div className="spinner-border text-light" style={{ width: '3rem', height: '3rem' }}>
@@ -190,7 +192,7 @@ function Products({ Toggle }) {
                         </div>
                     </div>
                 ) : (
-                    <>
+                    <div className='fadein'>
                         <div className="row d-flex">
                             <div className="col-6">
                                 <button onClick={() => setShowForm(true)} className="btn btn-primary newUser shadow" data-bs-toggle="modal" data-bs-target="#productForm">Add Product</button>
@@ -239,12 +241,12 @@ function Products({ Toggle }) {
                                 </table>
                             </div>
                         </div>
-                    </>
+                    </div>
                     )}
             </section>
 
             {showForm && (
-                <div className="modal fade show d-block shadow" id="productForm" style={{ display: 'block', backgroundColor: 'rgba(0, 0, 0, 0.5)' }}>
+                <div className="modal fadein d-block shadow" id="productForm" style={{ display: 'block', backgroundColor: 'rgba(0, 0, 0, 0.5)' }}>
                     <div className="modal-dialog modal-dialog-centered">
                         <div className="modal-content">
                             <div className="modal-header">
@@ -270,7 +272,7 @@ function Products({ Toggle }) {
             )}
 
             {showDeleteConfirmation && (
-                <div className="modal fade show d-block shadow" id="deleteConfirmationModal" style={{ display: 'block', backgroundColor: 'rgba(0, 0, 0, 0.5)' }}>
+                <div className="modal fadein d-block shadow" id="deleteConfirmationModal" style={{ display: 'block', backgroundColor: 'rgba(0, 0, 0, 0.5)' }}>
                     <div className="modal-dialog modal-dialog-centered">
                         <div className="modal-content">
                             <div className="modal-header">

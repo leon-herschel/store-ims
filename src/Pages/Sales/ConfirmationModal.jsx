@@ -2,7 +2,7 @@ function ConfirmationModal({ show, onClose, onConfirm, title, message, confirmBu
     if (!show) return null
 
     return (
-        <div className="modal fade show d-block" id="confirmationModal" style={{ display: 'block', backgroundColor: 'rgba(0, 0, 0, 0.5)' }}>
+        <div className="modal fadein d-block" id="confirmationModal" style={{ display: 'block', backgroundColor: 'rgba(0, 0, 0, 0.5)' }}>
             <div className="modal-dialog modal-dialog-centered">
                 <div className="modal-content">
                     <div className="modal-header">

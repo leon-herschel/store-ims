@@ -388,18 +388,20 @@ function Sales({ Toggle }) {
         <div className='px-3'>
             <Nav Toggle={Toggle} pageTitle="Sales"/>
             <div className='px-3 position-relative'>
-                {confirmationMessage && (
-                    <div className="alert alert-success position-absolute top-0 start-50 translate-middle" role="alert" style={{ zIndex: 1070 }}>
-                        {confirmationMessage}
-                    </div>
-                )}
-                {errorMessage && (
-                    <div className="alert alert-danger position-absolute top-0 start-50 translate-middle" role="alert" style={{ zIndex: 1070 }}>
-                        {errorMessage}
-                    </div>
-                )}
+                <div className="position-fixed top-1 start-50 translate-middle-x" style={{ zIndex: 1070 }}>
+                    {confirmationMessage && (
+                        <div className="alert alert-success fadein" role="alert">
+                            {confirmationMessage}
+                        </div>
+                    )}
+                    {errorMessage && (
+                        <div className="alert alert-danger fadein" role="alert">
+                            {errorMessage}
+                        </div>
+                    )}
+                </div>
             </div>
-            <section className="p-3">
+            <section className="p-3 fadein">
                 {loading ? (
                     <div className="d-flex justify-content-center align-items-center" style={{ minHeight: '80vh' }}>
                         <div className="spinner-border text-light" style={{ width: '3rem', height: '3rem' }}>
@@ -407,7 +409,7 @@ function Sales({ Toggle }) {
                         </div>
                     </div>
                 ) : (
-                    <>
+                    <div className='fadein'>
                         <div className="row d-flex">
                             <div className="col-6">
                             {viewMode === 'active' && formData ? (
@@ -505,12 +507,12 @@ function Sales({ Toggle }) {
                                 </table>
                             </div>
                         </div>
-                    </>
+                    </div>
                     )}
             </section>
 
             {showForm && (
-            <div className="modal fade show d-block" id="saleForm" style={{ display: 'block', backgroundColor: 'rgba(0, 0, 0, 0.5)' }}>
+            <div className="modal fadein d-block" id="saleForm" style={{ display: 'block', backgroundColor: 'rgba(0, 0, 0, 0.5)' }}>
                 <div className="modal-dialog modal-dialog-centered">
                 <div className="modal-content">
                     <div className="modal-header">
@@ -566,7 +568,7 @@ function Sales({ Toggle }) {
             )}
 
             {showArchiveByDateModal && (
-                <div className='modal fade show d-block' style={{ display: 'block', backgroundColor: 'rgba(0, 0, 0, 0.5)' }}>
+                <div className='modal fadein d-block' style={{ display: 'block', backgroundColor: 'rgba(0, 0, 0, 0.5)' }}>
                     <div className='modal-dialog modal-dialog-centered'>
                         <div className='modal-content'>
                             <div className='modal-header'>
@@ -605,7 +607,7 @@ function Sales({ Toggle }) {
             )}                   
 
             {showDeleteByDateModal && (
-                <div className='modal fade show d-block' style={{ display: 'block', backgroundColor: 'rgba(0, 0, 0, 0.5)' }}>
+                <div className='modal fadein d-block' style={{ display: 'block', backgroundColor: 'rgba(0, 0, 0, 0.5)' }}>
                     <div className='modal-dialog modal-dialog-centered'>
                         <div className='modal-content'>
                             <div className='modal-header'>
