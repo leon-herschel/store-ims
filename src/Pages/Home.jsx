@@ -77,9 +77,9 @@ function Home({ Toggle }) {
                     </div>
                 </div>
             ) : (
-                <div className="container-fluid fadein">
+                <div className="container-fluid">
                     <div className="row g-1 m-1">
-                        <div className="col-md-3 py-1 px-2 shadow-sm">
+                        <div className="col-md-3 py-1 px-2 shadow-sm" style={{ animation: 'fadeIn 0.2s ease-out forwards', opacity: 0 }}>
                             <Link to="/products" className="text-decoration-none text-dark">
                                 <div className="p-3 bg-white d-flex justify-content-around align-items-center rounded zoom-on">
                                     <div>
@@ -90,7 +90,7 @@ function Home({ Toggle }) {
                                 </div>
                             </Link>
                         </div>
-                        <div className="col-md-3 py-1 px-2 shadow-sm">
+                        <div className="col-md-3 py-1 px-2 shadow-sm" style={{ animation: 'fadeIn 0.4s ease-out forwards', opacity: 0 }}>
                             <Link to="/inventory" className="text-decoration-none text-dark">
                                 <div className="p-3 bg-white d-flex justify-content-around align-items-center rounded zoom-on">
                                     <div>
@@ -101,7 +101,7 @@ function Home({ Toggle }) {
                                 </div>
                             </Link>
                         </div>
-                        <div className="col-md-3 py-1 px-2 shadow-sm">
+                        <div className="col-md-3 py-1 px-2 shadow-sm" style={{ animation: 'fadeIn 0.6s ease-out forwards', opacity: 0 }}>
                             <Link to="/inventory" className="text-decoration-none text-dark">
                                 <div className="p-3 bg-white d-flex justify-content-around align-items-center rounded zoom-on">
                                     <div>
@@ -112,7 +112,7 @@ function Home({ Toggle }) {
                                 </div>
                             </Link>
                         </div>
-                        <div className="col-md-3 py-1 px-2 shadow-sm">
+                        <div className="col-md-3 py-1 px-2 shadow-sm" style={{ animation: 'fadeIn 0.8s ease-out forwards', opacity: 0 }}> 
                             <Link to="/sales" className="text-decoration-none text-dark">
                                 <div className="p-3 bg-white d-flex justify-content-around align-items-center rounded zoom-on">
                                     <div>
@@ -124,7 +124,7 @@ function Home({ Toggle }) {
                             </Link>
                         </div>
                     </div>
-                    <div className='row m-2'>
+                    <div className='row m-2' style={{ animation: 'fadeIn 0.5s ease-out forwards', opacity: 0 }}>
                         <table className="table caption-top table-striped table-hover mt-3 text-center shadow-sm rounded overflow-hidden">
                             <caption className="text-white fs-4">Inventory</caption>
                             <thead>

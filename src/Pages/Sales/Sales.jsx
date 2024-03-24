@@ -431,8 +431,7 @@ function Sales({ Toggle }) {
                                         <select
                                             className="form-select"
                                             value={viewMode}
-                                            onChange={handleViewModeChange}
-                                        >
+                                            onChange={handleViewModeChange}>
                                             <option value="active">Active Sales</option>
                                             <option value="archive">Archived Sales</option>
                                         </select>

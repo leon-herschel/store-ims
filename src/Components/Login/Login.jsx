@@ -101,7 +101,7 @@ function Login() {
   }
 
   return (
-    <div className="d-flex justify-content-center align-items-center vh-100 bg-container">
+    <div className="d-flex justify-content-center align-items-center vh-100 bg-container fadein">
       <div className="form-container p-5 rounded bg-white shadow">
         <form onSubmit={handleSubmit}>
           <h2 className="text-start fw-bold mb-1">Login</h2>
