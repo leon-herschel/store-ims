@@ -31,6 +31,8 @@ function Products({ Toggle }) {
                         ...childSnapshot.val()
                     })
                 })
+                productsArray.sort((a, b) => b.timeStamp - a.timeStamp)
+                
                 setProducts(productsArray)
                 setLoading(false)
             } else {

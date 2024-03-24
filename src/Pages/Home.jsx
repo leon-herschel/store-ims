@@ -24,6 +24,12 @@ function Home({ Toggle }) {
                     key,
                     ...value
                 }))
+                productsArray.sort((a, b) => {
+                    const totalValueA = a.unitPrice * a.quantity
+                    const totalValueB = b.unitPrice * b.quantity
+                    return totalValueB - totalValueA
+                })
+
                 setProducts(productsArray.slice(0, 4))
                 setProductsCount(Object.keys(productsData).length) 
 
@@ -71,7 +77,7 @@ function Home({ Toggle }) {
         <div className='px-3'>
             <Nav Toggle={Toggle} pageTitle="Home" />
             {loading ? ( 
-                <div className="d-flex justify-content-center align-items-center fadein" style={{ minHeight: '80vh' }}>
+                <div className="d-flex justify-content-center align-items-center" style={{ minHeight: '85vh' }}>
                     <div className="spinner-border text-light" style={{ width: '3rem', height: '3rem' }}>
                         <span className="visually-hidden">Loading...</span>
                     </div>
@@ -79,7 +85,7 @@ function Home({ Toggle }) {
             ) : (
                 <div className="container-fluid">
                     <div className="row g-1 m-1">
-                        <div className="col-md-3 py-1 px-2 shadow-sm" style={{ animation: 'fadeIn 0.2s ease-out forwards', opacity: 0 }}>
+                        <div className="col-md-3 py-1 px-2 shadow" style={{ animation: 'fadeIn 0.2s ease-out forwards', opacity: 0 }}>
                             <Link to="/products" className="text-decoration-none text-dark">
                                 <div className="p-3 bg-white d-flex justify-content-around align-items-center rounded zoom-on">
                                     <div>
@@ -90,7 +96,7 @@ function Home({ Toggle }) {
                                 </div>
                             </Link>
                         </div>
-                        <div className="col-md-3 py-1 px-2 shadow-sm" style={{ animation: 'fadeIn 0.4s ease-out forwards', opacity: 0 }}>
+                        <div className="col-md-3 py-1 px-2 shadow" style={{ animation: 'fadeIn 0.4s ease-out forwards', opacity: 0 }}>
                             <Link to="/inventory" className="text-decoration-none text-dark">
                                 <div className="p-3 bg-white d-flex justify-content-around align-items-center rounded zoom-on">
                                     <div>
@@ -101,7 +107,7 @@ function Home({ Toggle }) {
                                 </div>
                             </Link>
                         </div>
-                        <div className="col-md-3 py-1 px-2 shadow-sm" style={{ animation: 'fadeIn 0.6s ease-out forwards', opacity: 0 }}>
+                        <div className="col-md-3 py-1 px-2 shadow" style={{ animation: 'fadeIn 0.6s ease-out forwards', opacity: 0 }}>
                             <Link to="/inventory" className="text-decoration-none text-dark">
                                 <div className="p-3 bg-white d-flex justify-content-around align-items-center rounded zoom-on">
                                     <div>
@@ -112,7 +118,7 @@ function Home({ Toggle }) {
                                 </div>
                             </Link>
                         </div>
-                        <div className="col-md-3 py-1 px-2 shadow-sm" style={{ animation: 'fadeIn 0.8s ease-out forwards', opacity: 0 }}> 
+                        <div className="col-md-3 py-1 px-2 shadow" style={{ animation: 'fadeIn 0.8s ease-out forwards', opacity: 0 }}> 
                             <Link to="/sales" className="text-decoration-none text-dark">
                                 <div className="p-3 bg-white d-flex justify-content-around align-items-center rounded zoom-on">
                                     <div>

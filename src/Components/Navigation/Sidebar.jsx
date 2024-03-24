@@ -19,9 +19,9 @@ function Sidebar() {
   }
 
   return (
-    <div className='bg-white p-2'>
+    <div className='bg-white p-2' style={{ animation: 'fadeIn 0.2s ease-out forwards', opacity: 0 }}>
       <div className='pt-2'>
-        <img src={logo} alt="CFS" className="p-0 fs-2 store-logo img-fluid" />
+        <img src={logo} alt="CFS" className="p-0 fs-2 store-logo img-fluid" style={{ animation: 'fadeIn 0.2s ease-out forwards', opacity: 0 }}/>
       </div>
       <hr className='text-dark'/>
       <div className='list-group list-group-flush'>

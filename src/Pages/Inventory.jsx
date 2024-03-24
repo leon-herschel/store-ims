@@ -28,6 +28,8 @@ function Inventory({ Toggle }) {
                         key,
                         ...value
                     }))
+                    productsArray.sort((a, b) => a.quantity - b.quantity)
+                    
                     setProducts(productsArray)
                     updateStockCounts(productsArray)
                 }
