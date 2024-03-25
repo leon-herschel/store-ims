@@ -62,7 +62,7 @@ function Login() {
           customErrorMessage = 'Invalid email or password.'
           break;
         case 'auth/network-request-failed':
-          customErrorMessage = 'Network error occurred. Please check your internet connection and try again.';
+          customErrorMessage = 'Please check your internet connection and try again.';
           break;
         default:
           customErrorMessage = 'An error occurred. Please try again later.'

@@ -21,6 +21,11 @@
 .zoom-on {
     transition: transform 0.3s;
 }
+
+.chart-container {
+    max-height: 400px; 
+    overflow-y: auto; 
+  }
   
 .zoom-on:hover {
     transform: scale(1.05); 

@@ -1,124 +1,96 @@
-import { useEffect, useState } from 'react'
-import { db } from '../../firebaseConfig'
-import { ref, onValue } from 'firebase/database'
-import { Bar } from 'react-chartjs-2'
-import { Chart, registerables } from 'chart.js'
-Chart.register(...registerables)
+import { useEffect, useState } from 'react';
+import { db } from '../../firebaseConfig';
+import { ref, get } from 'firebase/database';
+import { Bar } from 'react-chartjs-2';
+import { Chart, registerables } from 'chart.js';
+Chart.register(...registerables);
 
 function ProductSalesBarChart() {
-    const [productSalesData, setProductSalesData] = useState([])
+  const [productSalesData, setProductSalesData] = useState([]);
+  const [chartData, setChartData] = useState({ labels: [], datasets: [] });
 
-    useEffect(() => {
-        const fetchData = () => {
-            try {
-                const productsRef = ref(db, 'products')
-                const salesRef = ref(db, 'sales')
-                const salesArchiveRef = ref(db, 'salesArchive')
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const salesRef = ref(db, 'sales');
+        const salesArchiveRef = ref(db, 'salesArchive');
+        const productsRef = ref(db, 'products');
 
-                onValue(productsRef, (snapshot) => {
-                    const productsData = snapshot.val()
+        const [salesSnapshot, salesArchiveSnapshot] = await Promise.all([
+          get(salesRef),
+          get(salesArchiveRef),
+        ]);
 
-                    const productsSalesData = []
-                    for (const productId in productsData) {
-                        const productName = productsData[productId].name
-                        getProductQuantitySold(productId, salesRef, salesArchiveRef).then(productQuantitySold => {
-                            productsSalesData.push({ productName, productQuantitySold })
-                            productsSalesData.sort((a, b) => b.productQuantitySold - a.productQuantitySold)
-                            setProductSalesData(productsSalesData)
-                        }).catch(error => {
-                            console.error('Error fetching product quantity sold:', error)
-                        })
-                    }
-                })
-            } catch (error) {
-                console.error('Error fetching product sales data:', error)
-            }
+        // Merge sales and salesArchive data
+        const allSalesData = { ...salesSnapshot.val(), ...salesArchiveSnapshot.val() };
+        const productOccurrences = {};
+
+        for (const saleId in allSalesData) {
+          const sale = allSalesData[saleId];
+          for (const product of Object.values(sale.products)) {
+            const productName = product.productName;
+            productOccurrences[productName] = (productOccurrences[productName] || 0) + product.quantity; // Accumulate the quantity sold
+          }
         }
 
-        fetchData()
-    }, [])
+        const productsSnapshot = await get(productsRef);
+        const productsData = productsSnapshot.val();
 
-    const getProductQuantitySold = async (productId, salesRef, salesArchiveRef) => {
-        try {
-            const productSalesSnapshot = await Promise.all([
-                getSalesDataSnapshot(salesRef, productId),
-                getSalesDataSnapshot(salesArchiveRef, productId)
-            ])
+        const productSalesData = Object.keys(productOccurrences)
+          .map((productName) => ({
+            productName,
+            productQuantitySold: productOccurrences[productName],
+          }))
+          .sort((a, b) => b.productQuantitySold - a.productQuantitySold) // Sort by quantity (descending)
+          .slice(0, 10); // Limit to top 10 products
 
-            let totalQuantitySold = 0
-            productSalesSnapshot.forEach(snapshot => {
-                const salesData = snapshot.val()
-                if (salesData) {
-                    for (const saleId in salesData) {
-                        const products = salesData[saleId].products
-                        products.forEach(product => {
-                            if (product.productId === productId) {
-                                const quantitySold = product.quantity
-                                totalQuantitySold += quantitySold
-                                console.log(`Quantity sold for product with ID ${productId}: ${quantitySold}`)
-                            }
-                        })
-                    }
-                }
-            })
+        console.log('productSalesData:', productSalesData);
 
-            console.log(`Total quantity sold for product with ID ${productId}: ${totalQuantitySold}`)
-            return totalQuantitySold
-        } catch (error) {
-            console.error('Error fetching product quantity sold:', error)
-            return 0
-        }
-    }
+        setProductSalesData(productSalesData);
+      } catch (error) {
+        console.error('Error fetching product sales data:', error);
+      }
+    };
 
-    const getSalesDataSnapshot = async (ref, productId) => {
-        return await ref.orderByChild('products/' + productId).equalTo(true).once('value')
-    }
+    fetchData();
+  }, []);
 
-    const chartData = {
-        labels: productSalesData.map(product => product.productName),
-        datasets: [
-            {
-                label: 'Quantity Sold',
-                data: productSalesData.map(product => product.productQuantitySold),
-                backgroundColor: 'rgba(52, 100, 228, 0.6)',
-                borderColor: 'rgba(52, 100, 228, 1)',
-                borderWidth: 1
-            }
-        ]
-    }
-
-    const chartOptions = {
-        indexAxis: 'y',
-        elements: {
-            bar: {
-                borderWidth: 2
-            }
+  useEffect(() => {
+    // Update chartData whenever productSalesData changes
+    setChartData({
+      labels: productSalesData.map((product) => product.productName),
+      datasets: [
+        {
+          label: 'Quantity Sold',
+          data: productSalesData.map((product) => product.productQuantitySold),
+          backgroundColor: 'rgba(52, 100, 228, 0.6)',
+          borderColor: 'rgba(52, 100, 228, 1)',
+          borderWidth: 1,
         },
-        responsive: true,
-        scales: {
-            x: {
-                beginAtZero: true,
-                title: {
-                    display: true,
-                    text: 'Quantity Sold'
-                }
-            },
-            y: {
-                title: {
-                    display: true,
-                    text: 'Products'
-                }
-            }
-        }
-    }
+      ],
+    });
+  }, [productSalesData]);
 
-    return (
-        <div>
-            <div>
-                <Bar data={chartData} options={chartOptions} />
-            </div>
-        </div>
-    )
+  const chartOptions = {
+    indexAxis: 'y',
+    elements: { bar: { borderWidth: 2 } },
+    responsive: true,
+    scales: {
+      x: {
+        beginAtZero: true,
+        title: { display: false, text: 'Quantity Sold' },
+      },
+      y: {
+        title: { display: false, text: 'Products' },
+      },
+    },
+  };
+
+  return (
+    <div className="product-sales-bar-chart">
+      <Bar data={chartData} options={chartOptions} />
+    </div>
+  );
 }
 
-export default ProductSalesBarChart
+export default ProductSalesBarChart;
