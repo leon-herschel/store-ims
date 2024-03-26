@@ -12,7 +12,6 @@ function YearlyLineChart() {
 
   useEffect(() => {
     const salesRef = ref(db, 'sales')
-    const salesArchiveRef = ref(db, 'salesArchive')
 
     const fetchData = () => {
       const fetchSalesData = (snapshot) => {
@@ -46,13 +45,7 @@ function YearlyLineChart() {
 
       onValue(salesRef, (snapshot) => {
         const salesData = fetchSalesData(snapshot)
-        onValue(salesArchiveRef, (archiveSnapshot) => {
-          const archiveData = fetchSalesData(archiveSnapshot)
-          const combinedSalesData = salesData.map((sales, index) => sales + archiveData[index])
-          setSalesData(combinedSalesData)
-        }, (error) => {
-          console.error("Error fetching sales archive data:", error)
-        })
+        setSalesData(salesData)
       }, (error) => {
         console.error("Error fetching sales data:", error)
       })
@@ -62,9 +55,7 @@ function YearlyLineChart() {
 
     return () => {
       const unsubscribeSales = onValue(salesRef, () => {})
-      const unsubscribeArchive = onValue(salesArchiveRef, () => {})
       unsubscribeSales()
-      unsubscribeArchive()
     }
   }, [])
 

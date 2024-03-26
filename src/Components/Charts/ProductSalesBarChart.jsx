@@ -13,36 +13,27 @@ function ProductSalesBarChart() {
     const fetchData = async () => {
       try {
         const salesRef = ref(db, 'sales');
-        const salesArchiveRef = ref(db, 'salesArchive');
-        const productsRef = ref(db, 'products');
+        const salesSnapshot = await get(salesRef);
 
-        const [salesSnapshot, salesArchiveSnapshot] = await Promise.all([
-          get(salesRef),
-          get(salesArchiveRef),
-        ]);
-
-        // Merge sales and salesArchive data
-        const allSalesData = { ...salesSnapshot.val(), ...salesArchiveSnapshot.val() };
+        // Extract sales data
+        const salesData = salesSnapshot.val() || {};
         const productOccurrences = {};
 
-        for (const saleId in allSalesData) {
-          const sale = allSalesData[saleId];
+        for (const saleId in salesData) {
+          const sale = salesData[saleId];
           for (const product of Object.values(sale.products)) {
             const productName = product.productName;
             productOccurrences[productName] = (productOccurrences[productName] || 0) + product.quantity; // Accumulate the quantity sold
           }
         }
 
-        const productsSnapshot = await get(productsRef);
-        const productsData = productsSnapshot.val();
-
         const productSalesData = Object.keys(productOccurrences)
           .map((productName) => ({
             productName,
             productQuantitySold: productOccurrences[productName],
           }))
-          .sort((a, b) => b.productQuantitySold - a.productQuantitySold) // Sort by quantity (descending)
-          .slice(0, 10); // Limit to top 10 products
+          .sort((a, b) => b.productQuantitySold - a.productQuantitySold) 
+          .slice(0, 10); 
 
         console.log('productSalesData:', productSalesData);
 
