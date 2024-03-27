@@ -21,20 +21,6 @@
 .zoom-on {
     transition: transform 0.3s;
 }
-
-.chart-container {
-    max-height: 400px; 
-    overflow-y: auto; 
-  }
-
-.chart-expanded {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    z-index: 9999;
-}
   
 .zoom-on:hover {
     transform: scale(1.05); 
