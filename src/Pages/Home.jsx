@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react'
-//import LineChart from '../Components/Charts/LineChart'
-import Nav from '../Components/Navigation/Nav'
 import { db } from '../firebaseConfig'
 import { ref, onValue } from 'firebase/database'
+import Nav from '../Components/Navigation/Nav'
 import { useNavigate, Link } from 'react-router-dom'
+import { Bar } from 'react-chartjs-2'
 
 function Home({ Toggle }) {
     const [productsCount, setProductsCount] = useState(0)
@@ -24,22 +24,18 @@ function Home({ Toggle }) {
                     key,
                     ...value
                 }))
-                productsArray.sort((a, b) => {
-                    const totalValueA = a.unitPrice * a.quantity
-                    const totalValueB = b.unitPrice * b.quantity
-                    return totalValueB - totalValueA
-                })
+                productsArray.sort((a, b) => b.quantity - a.quantity)
 
-                setProducts(productsArray.slice(0, 4))
-                setProductsCount(Object.keys(productsData).length) 
+                setProducts(productsArray)
+                setProductsCount(productsArray.length) 
 
                 let lowStock = 0
                 let outOfStock = 0
                 productsArray.forEach(product => {
-                    if (product.quantity < 5 && product.quantity != 0) {
+                    if (product.quantity < 5 && product.quantity !== 0) {
                         lowStock++
                     }
-                    if (product.quantity == 0) {
+                    if (product.quantity === 0) {
                         outOfStock++
                     }
                 })
@@ -65,12 +61,42 @@ function Home({ Toggle }) {
         }
     }, [])
 
-    const calculateTotalValue = (product) => {
-        const matchingProduct = products.find((p) => p.key === product.key)
-        if (matchingProduct) {
-            return matchingProduct.unitPrice * product.quantity
+    const chartData = {
+        labels: products.map(product => product.name),
+        datasets: [
+            {
+                label: 'Quantity',
+                data: products.map(product => product.quantity),
+                backgroundColor: products.map(product => {
+                    return product.quantity >= 5 ? 'rgba(32, 138, 89, 1)' : 'rgba(255, 193, 7, 1)'
+                }),
+            },
+        ],
+    }
+    
+    const chartOptions = {
+        scales: {
+            x: {
+                ticks: {
+                    
+                    color: 'rgba(0, 0, 0, 1)'
+                },
+            },
+            y: {
+                ticks: {
+                    title: { display: false},
+                    color: 'rgba(0, 0, 0, 1)'
+                },
+            },
+        },
+        responsive: true,
+        maintainAspectRatio: false, 
+        height: 500,
+        plugins: {
+            legend: {
+              display: false
+            }
         }
-        return 0
     }
 
     return (
@@ -130,37 +156,10 @@ function Home({ Toggle }) {
                             </Link>
                         </div>
                     </div>
-                    <div className='row m-2' style={{ animation: 'fadeIn 0.5s ease-out forwards', opacity: 0 }}>
-                        <table className="table caption-top table-striped table-hover mt-3 text-center shadow-sm rounded overflow-hidden">
-                            <caption className="text-white fs-4">Inventory</caption>
-                            <thead>
-                                <tr>
-                                    <th scope="col">Product ID</th>
-                                    <th scope="col">Product Name</th>
-                                    <th scope="col">Quantity</th>
-                                    <th scope="col">Total Value</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {products.map(product => (
-                                     <tr key={product.key} onClick={() => navigate("/inventory")}>
-                                        <th scope="row">{product.key}</th>
-                                        <td>{product.name}</td>
-                                        <td>{product.quantity}</td>
-                                        <td>{calculateTotalValue(product)}</td>
-                                    </tr>
-                                ))}
-                                <tr>
-                                    <td colSpan="4" className="text-center p-0" role="button" onClick={() => navigate("/inventory")}>
-                                        <i className="bi bi-three-dots fs-5"></i>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                    <div className="row">
-                        <div className="col-12 col-md-8 p-3 my-2">
-                            {/*<LineChart />*/}
+                    <div className="row g-2 m-2 fadein">
+                        <h4 className="text-white fs-4">Inventory Level</h4>
+                        <div className="col-12 p-3 bg-white shadow rounded" style={{height:"450px"}}>
+                                <Bar data={chartData} options={chartOptions} />
                         </div>
                     </div>
                 </div>

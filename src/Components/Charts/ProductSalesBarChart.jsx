@@ -1,29 +1,29 @@
-import { useEffect, useState } from 'react';
-import { db } from '../../firebaseConfig';
-import { ref, get } from 'firebase/database';
-import { Bar } from 'react-chartjs-2';
-import { Chart, registerables } from 'chart.js';
-Chart.register(...registerables);
+import { useEffect, useState } from 'react'
+import { db } from '../../firebaseConfig'
+import { ref, get } from 'firebase/database'
+import { Bar } from 'react-chartjs-2'
+import { Chart, registerables } from 'chart.js'
+Chart.register(...registerables)
 
 function ProductSalesBarChart() {
-  const [productSalesData, setProductSalesData] = useState([]);
-  const [chartData, setChartData] = useState({ labels: [], datasets: [] });
+  const [productSalesData, setProductSalesData] = useState([])
+  const [chartData, setChartData] = useState({ labels: [], datasets: [] })
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const salesRef = ref(db, 'sales');
-        const salesSnapshot = await get(salesRef);
+        const salesRef = ref(db, 'sales')
+        const salesSnapshot = await get(salesRef)
 
         // Extract sales data
-        const salesData = salesSnapshot.val() || {};
-        const productOccurrences = {};
+        const salesData = salesSnapshot.val() || {}
+        const productOccurrences = {}
 
         for (const saleId in salesData) {
-          const sale = salesData[saleId];
+          const sale = salesData[saleId]
           for (const product of Object.values(sale.products)) {
-            const productName = product.productName;
-            productOccurrences[productName] = (productOccurrences[productName] || 0) + product.quantity; // Accumulate the quantity sold
+            const productName = product.productName
+            productOccurrences[productName] = (productOccurrences[productName] || 0) + product.quantity // Accumulate the quantity sold
           }
         }
 
@@ -33,18 +33,17 @@ function ProductSalesBarChart() {
             productQuantitySold: productOccurrences[productName],
           }))
           .sort((a, b) => b.productQuantitySold - a.productQuantitySold) 
-          .slice(0, 10); 
 
-        console.log('productSalesData:', productSalesData);
+        console.log('productSalesData:', productSalesData)
 
-        setProductSalesData(productSalesData);
+        setProductSalesData(productSalesData)
       } catch (error) {
-        console.error('Error fetching product sales data:', error);
+        console.error('Error fetching product sales data:', error)
       }
-    };
+    }
 
-    fetchData();
-  }, []);
+    fetchData()
+  }, [])
 
   useEffect(() => {
     // Update chartData whenever productSalesData changes
@@ -59,8 +58,8 @@ function ProductSalesBarChart() {
           borderWidth: 1,
         },
       ],
-    });
-  }, [productSalesData]);
+    })
+  }, [productSalesData])
 
   const chartOptions = {
     indexAxis: 'y',
@@ -75,13 +74,13 @@ function ProductSalesBarChart() {
         title: { display: false, text: 'Products' },
       },
     },
-  };
+  }
 
   return (
     <div className="product-sales-bar-chart">
       <Bar data={chartData} options={chartOptions} />
     </div>
-  );
+  )
 }
 
-export default ProductSalesBarChart;
+export default ProductSalesBarChart
