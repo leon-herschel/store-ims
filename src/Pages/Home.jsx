@@ -103,7 +103,7 @@ function Home({ Toggle }) {
         <div className='px-3'>
             <Nav Toggle={Toggle} pageTitle="Home" />
             {loading ? ( 
-                <div className="d-flex justify-content-center align-items-center" style={{ minHeight: '85vh' }}>
+                <div className="d-flex justify-content-center align-items-center" style={{ minHeight: '84vh' }}>
                     <div className="spinner-border text-light" style={{ width: '3rem', height: '3rem' }}>
                         <span className="visually-hidden">Loading...</span>
                     </div>
@@ -157,10 +157,10 @@ function Home({ Toggle }) {
                         </div>
                     </div>
                     <div className="row g-2 m-2 fadein">
-                        <h4 className="text-white fs-4">Inventory Level</h4>
-                        <div className="col-12 p-3 bg-white shadow rounded" style={{height:"450px"}}>
+                        <h4 className="text-white fs-4">Stock Levels</h4>
+                            <Link to="/inventory" className="col-12 p-3 bg-white shadow rounded" style={{height:"450px"}}>
                                 <Bar data={chartData} options={chartOptions} />
-                        </div>
+                            </Link>
                     </div>
                 </div>
             )}

@@ -21,7 +21,7 @@
 .zoom-on {
     transition: transform 0.3s;
 }
-  
+
 .zoom-on:hover {
     transform: scale(1.05); 
 }
