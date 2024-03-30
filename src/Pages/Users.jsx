@@ -18,7 +18,7 @@ function Users({ Toggle }) {
         email: '',
         access: '',
         password: ''
-    });
+    })
     const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false)
     const [confirmationMessage, setConfirmationMessage] = useState('')
     const [errorMessage, setErrorMessage] = useState('')
@@ -47,7 +47,7 @@ function Users({ Toggle }) {
     }, [])
 
     const handleAdd = async (e) => {
-        e.preventDefault();
+        e.preventDefault()
         
         try {
             const { email, password } = formData
@@ -111,7 +111,7 @@ function Users({ Toggle }) {
                 email: userToEdit.email,
                 access: userToEdit.access,
                 password: userToEdit.password
-            });
+            })
             setEditMode(true)
             setShowForm(true)
         } else {
@@ -280,7 +280,7 @@ function Users({ Toggle }) {
                                     <select name="access" value={formData.access} onChange={handleChange} className="form-select mb-3" required>
                                         <option value="">Select Access</option>
                                         <option value="Admin">Admin</option>
-                                        <option value="User">User</option>
+                                        <option value="Member">Member</option>
                                     </select>
                                     <div className={`input-group mb-3 ${editMode ? 'd-none' : ''}`}>
                                         <input 

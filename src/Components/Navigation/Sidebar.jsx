@@ -1,11 +1,16 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom' 
 import './Sidebar.css'
 import logo from '../../assets/logo.svg'
-import { auth } from '../../firebaseConfig'
+import { useAuth } from '../Login/AuthContext'
+import { auth, db } from '../../firebaseConfig'
+import { useEffect, useState } from 'react'
+import { ref, onValue } from 'firebase/database'
 
 function Sidebar() {
   const location = useLocation()
   const navigate = useNavigate() 
+  const { currentUser } = useAuth()
+  const [userAccess, setUserAccess] = useState(null)
 
   const handleSignOut = () => {
     auth.signOut()
@@ -17,6 +22,31 @@ function Sidebar() {
         console.error('Error signing out:', error)
       })
   }
+
+  useEffect(() => {
+    const fetchUserAccess = () => {
+        try {
+            if (currentUser) {
+                const uid = currentUser.uid;
+                const userRef = ref(db, `users/${uid}/access`)
+                onValue(userRef, (snapshot) => {
+                    if (snapshot.exists()) {
+                        const access = snapshot.val()
+                        setUserAccess(access)
+                    } else {
+                        console.error('User access data does not exist.')
+                    }
+                })
+            }
+        } catch (error) {
+            console.error('Error fetching user access:', error)
+        }
+    }
+
+    if (db && currentUser) {
+        fetchUserAccess()
+    }
+  }, [currentUser, db])
 
   return (
     <div className='bg-white p-2' style={{ animation: 'fadeIn 0.2s ease-out forwards', opacity: 0 }}>
@@ -41,18 +71,24 @@ function Sidebar() {
           <i className='bi bi-receipt fs-5 me-3'></i>
           <span className="d-none d-sm-inline">Sales</span>
         </Link>
-        <Link to="/users" className={location.pathname === '/users' ? 'active list-group-item py-2 rounded' : 'list-group-item py-2 rounded'}>
-          <i className='bi bi-people fs-5 me-3'></i>
-          <span className="d-none d-sm-inline">Users</span>
-        </Link>
-        <Link to="/reports" className={location.pathname === '/reports' ? 'active list-group-item py-2 rounded' : 'list-group-item py-2 rounded'}>
-          <i className='bi bi-clipboard-data fs-5 me-3'></i>
-          <span className="d-none d-sm-inline">Reports</span>
-        </Link>
+        {userAccess === 'Admin' || userAccess === 'Superadmin' ? (
+            <>
+                <Link to="/users" className={location.pathname === '/users' ? 'active list-group-item py-2 rounded' : 'list-group-item py-2 rounded'}>
+                    <i className='bi bi-people fs-5 me-3'></i>
+                    <span className="d-none d-sm-inline">Users</span>
+                </Link>
+                <Link to="/reports" className={location.pathname === '/reports' ? 'active list-group-item py-2 rounded' : 'list-group-item py-2 rounded'}>
+                    <i className='bi bi-clipboard-data fs-5 me-3'></i>
+                    <span className="d-none d-sm-inline">Reports</span>
+                </Link>
+            </>
+          ) : null}
         <Link to="/" className='list-group-item py-2 rounded' onClick={handleSignOut}>
           <i className='bi bi-power fs-5 me-3'></i>
           <span className="d-none d-sm-inline">Logout</span>
         </Link>
+        <div>
+      </div>
       </div>
     </div>
   )
