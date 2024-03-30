@@ -114,6 +114,7 @@ function Login() {
               className={`form-control ${resetPassRequested && !email && 'is-invalid'}`}
               value={email}
               onChange={handleEmailChange}
+              required
             />
             {resetPassRequested && !email && <div className="invalid-feedback">Please enter your email.</div>}
           </div>
@@ -126,6 +127,7 @@ function Login() {
                 className="form-control"
                 value={password}
                 onChange={handlePasswordChange}
+                required
               />
               <button
                 className="btn btn-outline-secondary"

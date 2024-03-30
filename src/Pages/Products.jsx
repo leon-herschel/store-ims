@@ -2,6 +2,8 @@ import Nav from '../Components/Navigation/Nav'
 import { useState, useEffect } from 'react'
 import { ref, onValue, remove, update, serverTimestamp } from 'firebase/database'
 import { db } from '../firebaseConfig'
+import UserAccessFetcher from '../UserAccessFetcher'
+import { useAuth } from '../Components/Login/AuthContext'
 
 function Products({ Toggle }) {
     const [products, setProducts] = useState([])
@@ -19,6 +21,8 @@ function Products({ Toggle }) {
     const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false)
     const [confirmationMessage, setConfirmationMessage] = useState('')
     const [errorMessage, setErrorMessage] = useState('')
+    const { currentUser } = useAuth()
+    const [userAccess, setUserAccess] = useState(null)
 
     useEffect(() => {
         const productsRef = ref(db, 'products')
@@ -171,6 +175,7 @@ function Products({ Toggle }) {
 
     return (
         <div className='px-3'>
+            <UserAccessFetcher currentUser={currentUser} setUserAccess={setUserAccess} />
             <Nav Toggle={Toggle} pageTitle="Products"/>
             <div className='px-3 position-relative'>
                 <div className="position-fixed top-1 start-50 translate-middle-x" style={{ zIndex: 1070 }}>
@@ -220,7 +225,9 @@ function Products({ Toggle }) {
                                             <th scope='col'>Product Name</th>
                                             <th scope='col'>Description</th>
                                             <th scope='col'>Unit Price</th>
-                                            <th scope='col'>Actions</th>
+                                            {userAccess !== "Member" && (
+                                                <th scope='col'>Actions</th>
+                                            )}
                                         </tr>
                                     </thead>
                                     <tbody className='table-striped'>
@@ -233,10 +240,12 @@ function Products({ Toggle }) {
                                                 <td>{product.name}</td>
                                                 <td>{product.description}</td>
                                                 <td>{product.unitPrice}</td>
+                                                {userAccess !== "Member" && ( 
                                                 <td>
                                                     <button onClick={() => handleEdit(product.key)} className="btn btn-success me-2">Edit</button>
                                                     <button onClick={() => handleDelete(product.key)} className="btn btn-danger">Delete</button>
                                                 </td>
+                                            )}
                                             </tr>
                                         ))}
                                     </tbody>

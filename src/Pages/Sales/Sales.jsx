@@ -3,6 +3,8 @@ import ConfirmationModal from './ConfirmationModal'
 import { useState, useEffect} from 'react'
 import { ref, remove, update, set, get} from 'firebase/database'
 import { db } from '../../firebaseConfig'
+import UserAccessFetcher from '../../UserAccessFetcher'
+import { useAuth } from '../../Components/Login/AuthContext'
 
 function Sales({ Toggle }) {
     const [sales, setSales] = useState([])
@@ -24,6 +26,8 @@ function Sales({ Toggle }) {
     const [archiveStartDate, setArchiveStartDate] = useState('')
     const [archiveEndDate, setArchiveEndDate] = useState('')
     const [showArchiveByDateModal, setShowArchiveByDateModal] = useState(false)
+    const { currentUser } = useAuth()
+    const [userAccess, setUserAccess] = useState(null)
     const [formData, setFormData] = useState({
         products: [], 
         totalPrice: 0, 
@@ -386,6 +390,7 @@ function Sales({ Toggle }) {
     
     return (
         <div className='px-3'>
+            <UserAccessFetcher currentUser={currentUser} setUserAccess={setUserAccess} />
             <Nav Toggle={Toggle} pageTitle="Sales"/>
             <div className='px-3 position-relative'>
                 <div className="position-fixed top-1 start-50 translate-middle-x" style={{ zIndex: 1070 }}>
@@ -415,19 +420,21 @@ function Sales({ Toggle }) {
                             {viewMode === 'active' && formData ? (
                                 <button onClick={() => setShowForm(true)} className="btn btn-primary newUser me-2 shadow" data-bs-toggle="modal" data-bs-target="#saleForm">Add Sale</button>
                             ) : null}
-                            {viewMode === 'active' ? (
+                            {viewMode === 'active' && userAccess !== "Member" && (
                                 <button onClick={() => setShowArchiveByDateModal(true)} className="btn btn-danger me-2 shadow">
                                     Archive by Date
                                 </button>
-                            ) : (
+                            )}
+                            {viewMode === 'archive' && userAccess !== "Member" && (
                                 <button onClick={() => setShowDeleteByDateModal(true)} className="btn btn-danger me-2 shadow">
                                     Delete by Date
                                 </button>
                             )}
                             </div>
                             <div className="col-6 d-flex justify-content-end">
-                            <div className="row">
-                                <div className="col-12">
+                                {userAccess !== "Member" && (
+                                <div className="row">
+                                    <div className="col-12">
                                         <select
                                             className="form-select"
                                             value={viewMode}
@@ -437,6 +444,7 @@ function Sales({ Toggle }) {
                                         </select>
                                     </div>
                                 </div>
+                                )}
                                 <div className="w-50 ms-2">
                                     <input 
                                         type="text" 
@@ -458,7 +466,9 @@ function Sales({ Toggle }) {
                                             <th scope='col'>Quantity</th>
                                             <th scope='col'>Total Price</th>
                                             <th scope='col'>DateTime</th>
-                                            <th scope='col'>Actions</th>
+                                            {userAccess !== "Member" && (
+                                                <th scope='col'>Actions</th>
+                                            )}
                                         </tr>
                                     </thead>
                                     <tbody className='table-striped'>
@@ -487,19 +497,21 @@ function Sales({ Toggle }) {
                                             </td>
                                             <td>{sale.totalPrice.toFixed(2)}</td>
                                             <td>{sale.dateTime}</td>
-                                            <td>
-                                                {viewMode === 'archive' ? (
-                                                    <>
-                                                    <button onClick={() => handleUnarchive(sale.key)} className="btn btn-success me-2">Unarchive</button>
-                                                    <button onClick={() => handleDelete(sale.key)} className="btn btn-danger">Delete</button>
-                                                    </>
-                                                ) : (
-                                                    <>
-                                                        <button onClick={() => handleUndo(sale.key)} className="btn btn-success me-2">Undo</button>
-                                                        <button onClick={() => handleArchive(sale.key)} className="btn btn-danger">Archive</button>
-                                                    </>
-                                                )}
-                                            </td>
+                                            {userAccess !== "Member" && (
+                                                <td>
+                                                    {viewMode === 'archive' ? (
+                                                        <>
+                                                        <button onClick={() => handleUnarchive(sale.key)} className="btn btn-success me-2">Unarchive</button>
+                                                        <button onClick={() => handleDelete(sale.key)} className="btn btn-danger">Delete</button>
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <button onClick={() => handleUndo(sale.key)} className="btn btn-success me-2">Undo</button>
+                                                            <button onClick={() => handleArchive(sale.key)} className="btn btn-danger">Archive</button>
+                                                        </>
+                                                    )}
+                                                </td>
+                                            )}
                                         </tr>
                                     ))}
                                 </tbody>

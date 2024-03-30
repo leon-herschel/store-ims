@@ -2,9 +2,9 @@ import { Link, useLocation, useNavigate } from 'react-router-dom'
 import './Sidebar.css'
 import logo from '../../assets/logo.svg'
 import { useAuth } from '../Login/AuthContext'
-import { auth, db } from '../../firebaseConfig'
-import { useEffect, useState } from 'react'
-import { ref, onValue } from 'firebase/database'
+import { auth } from '../../firebaseConfig'
+import { useState } from 'react'
+import UserAccessFetcher from '../../UserAccessFetcher'
 
 function Sidebar() {
   const location = useLocation()
@@ -23,33 +23,9 @@ function Sidebar() {
       })
   }
 
-  useEffect(() => {
-    const fetchUserAccess = () => {
-        try {
-            if (currentUser) {
-                const uid = currentUser.uid;
-                const userRef = ref(db, `users/${uid}/access`)
-                onValue(userRef, (snapshot) => {
-                    if (snapshot.exists()) {
-                        const access = snapshot.val()
-                        setUserAccess(access)
-                    } else {
-                        console.error('User access data does not exist.')
-                    }
-                })
-            }
-        } catch (error) {
-            console.error('Error fetching user access:', error)
-        }
-    }
-
-    if (db && currentUser) {
-        fetchUserAccess()
-    }
-  }, [currentUser, db])
-
   return (
     <div className='bg-white p-2' style={{ animation: 'fadeIn 0.2s ease-out forwards', opacity: 0 }}>
+      <UserAccessFetcher currentUser={currentUser} setUserAccess={setUserAccess} />
       <div className='pt-2'>
         <img src={logo} alt="CFS" className="p-0 fs-2 store-logo img-fluid" style={{ animation: 'fadeIn 0.2s ease-out forwards', opacity: 0 }}/>
       </div>

@@ -2,6 +2,8 @@ import { ref, update, get } from 'firebase/database'
 import { db } from '../firebaseConfig'
 import { useState, useEffect } from 'react'
 import Nav from '../Components/Navigation/Nav'
+import UserAccessFetcher from '../UserAccessFetcher'
+import { useAuth } from '../Components/Login/AuthContext'
 
 function Inventory({ Toggle }) {
     const [products, setProducts] = useState([])
@@ -16,6 +18,8 @@ function Inventory({ Toggle }) {
     const [outOfStockCount, setOutOfStockCount] = useState(0)
     const [showAddModal, setShowAddModal] = useState(false)
     const [addQuantityValue, setAddQuantityValue] = useState('')
+    const { currentUser } = useAuth()
+    const [userAccess, setUserAccess] = useState(null)
 
     useEffect(() => {
         const fetchProducts = async () => {
@@ -176,6 +180,7 @@ function Inventory({ Toggle }) {
 
     return (
         <div className='px-3'>
+            <UserAccessFetcher currentUser={currentUser} setUserAccess={setUserAccess} />
             <Nav Toggle={Toggle} pageTitle="Inventory"/>
             <div className='px-3 position-relative'>
                 <div className="position-fixed top-1 start-50 translate-middle-x" style={{ zIndex: 1070 }}>
@@ -251,7 +256,7 @@ function Inventory({ Toggle }) {
                                                                 <i className="bi bi-exclamation-triangle-fill text-danger fs-5 icon-inv" data-bs-toggle="tooltip" data-bs-placement="top" title="Out of stock"></i>
                                                             )}
                                                         </div>
-                                                        <div className="pe-5">
+                                                        <div className={userAccess === "Member" ? "me-5 pe-5" : "me-5 pe-5"}>
                                                             {product.key}
                                                         </div>
                                                     </div>
@@ -282,7 +287,9 @@ function Inventory({ Toggle }) {
                                                     ) : (
                                                         <>
                                                             <button onClick={() => handleAddQuantity(product.key, product.quantity)} className="btn btn-primary me-2">Add</button>
-                                                            <button onClick={() => handleEdit(product.key, product.quantity)} className="btn btn-success">Edit</button>
+                                                            {userAccess !== "Member" && (
+                                                                <button onClick={() => handleEdit(product.key, product.quantity)} className="btn btn-success">Edit</button>
+                                                            )}
                                                         </>
                                                     )}
                                                 </td>

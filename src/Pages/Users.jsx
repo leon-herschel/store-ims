@@ -4,6 +4,8 @@ import { ref, serverTimestamp, remove, update, onValue } from 'firebase/database
 import { createUserWithEmailAndPassword, sendEmailVerification, signOut } from 'firebase/auth'
 import { auth, db } from '../firebaseConfig'
 import { useNavigate } from 'react-router-dom'
+import UserAccessFetcher from '../UserAccessFetcher'
+import { useAuth } from '../Components/Login/AuthContext'
 
 function Users({ Toggle }) {
     const navigate = useNavigate()
@@ -22,6 +24,8 @@ function Users({ Toggle }) {
     const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false)
     const [confirmationMessage, setConfirmationMessage] = useState('')
     const [errorMessage, setErrorMessage] = useState('')
+    const { currentUser } = useAuth()
+    const [userAccess, setUserAccess] = useState(null)
 
     useEffect(() => {
         const usersRef = ref(db, 'users')
@@ -187,6 +191,7 @@ function Users({ Toggle }) {
 
     return (
         <div className='px-3'>
+            <UserAccessFetcher currentUser={currentUser} setUserAccess={setUserAccess} />
             <Nav Toggle={Toggle} pageTitle="Users"/>
             <div className='px-3 position-relative'>
                 <div className="position-fixed top-1 start-50 translate-middle-x" style={{ zIndex: 1070 }}>
@@ -250,8 +255,12 @@ function Users({ Toggle }) {
                                         <td>{user.email}</td>
                                         <td>{user.access}</td>
                                         <td>
-                                            <button onClick={() => handleEdit(user.key)} className="btn btn-success me-2">Edit</button>
-                                            <button onClick={() => handleDelete(user.key)} className="btn btn-danger">Delete</button>
+                                            {(userAccess === "Admin" || userAccess === "Superadmin") && user.access !== "Superadmin" && (
+                                                <button onClick={() => handleEdit(user.key)} className="btn btn-success me-2">Edit</button>
+                                            )}
+                                            {userAccess === "Superadmin" && user.access !== "Superadmin" && (
+                                                <button onClick={() => handleDelete(user.key)} className="btn btn-danger">Delete</button>
+                                            )}
                                         </td>
                                     </tr>
                                 ))}
