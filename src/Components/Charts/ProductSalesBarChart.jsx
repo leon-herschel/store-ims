@@ -68,10 +68,11 @@ function ProductSalesBarChart() {
     scales: {
       x: {
         beginAtZero: true,
-        title: { display: false, text: 'Quantity Sold' },
+        title: { display: false, text: 'Quantity Sold', color: 'black' },
       },
       y: {
-        title: { display: false, text: 'Products' },
+        title: { display: false, text: 'Products', color: 'black' }, 
+        ticks: { color: 'black' }, 
       },
     },
   }
