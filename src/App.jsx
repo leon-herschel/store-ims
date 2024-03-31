@@ -14,6 +14,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import Private from './Components/Login/Private'
 import PageNotFound from './Pages/NotFound'
 import { AuthProvider } from './Components/Login/AuthContext'
+import bg from '../src/assets/bg.svg'
 
 function App() {
   const [toggle, setToggle] = useState(true)
@@ -25,7 +26,14 @@ function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
-        <div className='container-fluid min-vh-100 main-container'>
+        <div className='container-fluid min-vh-100' style={{
+            backgroundColor: 'rgb(0, 0, 30)',
+            backgroundImage: `url(${bg})`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            backgroundRepeat: 'no-repeat',
+            backgroundAttachment: 'fixed',
+          }}>
           <Routes>
             <Route path="/" element={<Login />} /> 
             <Route path="/*" element={
