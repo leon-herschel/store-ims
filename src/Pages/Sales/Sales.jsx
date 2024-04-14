@@ -26,6 +26,11 @@ function Sales({ Toggle }) {
     const [endDate, setEndDate] = useState('')
     const [archiveStartDate, setArchiveStartDate] = useState('')
     const [archiveEndDate, setArchiveEndDate] = useState('')
+    const [showDateRangeModal, setShowDateRangeModal] = useState(false)
+    const [startDateRange, setStartDateRange] = useState('')
+    const [endDateRange, setEndDateRange] = useState('')
+    const [totalPriceOfFilteredSales, setTotalPriceOfFilteredSales] = useState(0)
+    const [isDataFiltered, setIsDataFiltered] = useState(false)
     const [showArchiveByDateModal, setShowArchiveByDateModal] = useState(false)
     const { currentUser } = useAuth()
     const [userAccess, setUserAccess] = useState(null)
@@ -84,6 +89,7 @@ function Sales({ Toggle }) {
     const handleViewModeChange = (e) => {
         setViewMode(e.target.value)
         setSearchQuery('')
+        setIsDataFiltered(false)
     }
 
     const getCurrentDateTime = () => {
@@ -444,6 +450,26 @@ function Sales({ Toggle }) {
             setShowArchiveByDateModal(false)
         }
     }
+
+    const handleFilterByDateRange = () => {
+        const startDateObj = new Date(startDateRange)
+        const endDateObj = new Date(endDateRange)
+    
+        startDateObj.setHours(0, 0, 0, 0)
+        endDateObj.setHours(23, 59, 59, 999)
+    
+        const filteredSales = sales.filter((sale) => {
+            const saleDate = new Date(sale.dateTime)
+            return saleDate >= startDateObj && saleDate <= endDateObj
+        })
+    
+        const totalPriceOfFilteredSales = filteredSales.reduce((total, sale) => total + sale.totalPrice, 0).toFixed(2)
+    
+        setIsDataFiltered(true)
+        setTotalPriceOfFilteredSales(totalPriceOfFilteredSales)
+        setSales(filteredSales)
+        setShowDateRangeModal(false)
+    }    
     
     return (
         <div className='px-3'>
@@ -477,6 +503,11 @@ function Sales({ Toggle }) {
                             {viewMode === 'active' && formData ? (
                                 <button onClick={() => setShowForm(true)} className="btn btn-primary newUser me-2 shadow" data-bs-toggle="modal" data-bs-target="#saleForm">Add Sale</button>
                             ) : null}
+                            {viewMode === 'active' && userAccess !== "Member" && (
+                                <button type='button' className="btn btn-success me-2 shadow" onClick={() => setShowDateRangeModal(true)}>
+                                    Filter by Date
+                                </button>
+                            )}
                             {viewMode === 'active' && userAccess !== "Member" && (
                                 <button onClick={() => setShowArchiveByDateModal(true)} className="btn btn-danger me-2 shadow">
                                     Archive by Date
@@ -581,8 +612,13 @@ function Sales({ Toggle }) {
                                                 </td>
                                             )}
                                         </tr>
-                                    ))}
-                                </tbody>
+                                        ))}
+                                        {isDataFiltered && viewMode === 'active' && (
+                                            <tr>
+                                                <td className='text-start py-3 ps-5' colSpan='6'><b>Total Sales:</b> {totalPriceOfFilteredSales}</td>
+                                            </tr>
+                                        )}
+                                    </tbody>
                                 </table>
                             </div>
                         </div>
@@ -739,6 +775,45 @@ function Sales({ Toggle }) {
                         </div>
                     </div>
                 </div>
+            )}
+
+            {showDateRangeModal && (
+            <div className='modal fadein d-block' style={{ display: 'block', backgroundColor: 'rgba(0, 0, 0, 0.5)' }}>
+                <div className='modal-dialog modal-dialog-centered'>
+                <div className='modal-content'>
+                    <div className='modal-header'>
+                    <h5 className='modal-title'>Select Date Range</h5>
+                    <button type='button' className='btn-close' onClick={() => setShowDateRangeModal(false)} aria-label='Close'></button>
+                    </div>
+                    <div className='modal-body'>
+                    <div className='form-group'>
+                        <label htmlFor='startDateRange'>Start Date:</label>
+                        <input
+                        type='date'
+                        className="form-control"
+                        id='startDateRange'
+                        value={startDateRange}
+                        onChange={(e) => setStartDateRange(e.target.value)}
+                        />
+                    </div>
+                    <div className='form-group'>
+                        <label htmlFor='endDateRange'>End Date:</label>
+                        <input
+                        type='date'
+                        className="form-control"
+                        id='endDateRange'
+                        value={endDateRange}
+                        onChange={(e) => setEndDateRange(e.target.value)}
+                        />
+                    </div>
+                    </div>
+                    <div className='modal-footer'>
+                    <button type='button' className='btn btn-secondary' onClick={() => setShowDateRangeModal(false)}>Close</button>
+                    <button type='button' className='btn btn-success' onClick={handleFilterByDateRange}>Filter</button>
+                    </div>
+                </div>
+                </div>
+            </div>
             )}
 
             {showUndoConfirmation && (
