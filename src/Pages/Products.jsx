@@ -1,9 +1,11 @@
 import Nav from '../Components/Navigation/Nav'
 import { useState, useEffect } from 'react'
 import { ref, onValue, remove, update, serverTimestamp } from 'firebase/database'
-import { db } from '../firebaseConfig'
+import { db, storage } from '../firebaseConfig'
+import {ref as storageRef, uploadBytes, getDownloadURL, listAll} from "firebase/storage"
 import UserAccessFetcher from '../UserAccessFetcher'
 import { useAuth } from '../Components/Login/AuthContext'
+import noImage from '../assets/noImage.svg'
 
 function Products({ Toggle }) {
     const [products, setProducts] = useState([])
@@ -14,9 +16,11 @@ function Products({ Toggle }) {
     const [searchQuery, setSearchQuery] = useState('')
     const [formData, setFormData] = useState({
         name: '',
-        description: '',
-        unitPrice: '',
-        quantity: '' 
+        size: '',
+        purchasePrice: '',
+        retailPrice: '',
+        quantity: '',
+        picture: null 
     })
     const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false)
     const [confirmationMessage, setConfirmationMessage] = useState('')
@@ -60,34 +64,45 @@ function Products({ Toggle }) {
             const productsRef = ref(db, 'products')
             let productData = {
                 name: formData.name,
-                description: formData.description,
-                unitPrice: parseFloat(formData.unitPrice).toFixed(2),
+                size: formData.size,
+                purchasePrice: parseFloat(formData.purchasePrice).toFixed(2),
+                retailPrice: parseFloat(formData.retailPrice).toFixed(2),
                 quantity: formData.quantity,
-                timeStamp: serverTimestamp()
-            };
+                timeStamp: serverTimestamp(),
+                picture: null
+            }
+
+            if (formData.picture) {
+                const imageRef = storageRef(storage, `images/${formData.picture.name}`);
+                await uploadBytes(imageRef, formData.picture);
+                const downloadURL = await getDownloadURL(imageRef);
+                productData.picture = downloadURL;
+            }
     
             if (editMode) {
-                await update(ref(db, `products/${editProductId}`), productData);
-                setConfirmationMessage('Product updated successfully.');
+                await update(ref(db, `products/${editProductId}`), productData)
+                setConfirmationMessage('Product updated successfully.')
             } else {
-                let productKey = generateProductKey();
+                let productKey = generateProductKey()
                 while (products.some((product) => product.key === productKey)) {
-                    productKey = generateProductKey();
+                    productKey = generateProductKey()
                 }
                 await update(productsRef, {
                     [productKey]: productData
-                });
-                setConfirmationMessage('Product added successfully.');
+                })
+                setConfirmationMessage('Product added successfully.')
             }
     
-            setEditMode(false);
-            setEditProductId('');
-            setShowForm(false);
+            setEditMode(false)
+            setEditProductId('')
+            setShowForm(false)
             setFormData({
                 name: '',
-                description: '',
-                unitPrice: '',
-                quantity: 0
+                size: '',
+                purchasePrice: '',
+                retailPrice: '',
+                quantity: '',
+                picture: null
             });
         } catch (err) {
             setErrorMessage('Error adding/updating product.')
@@ -95,16 +110,17 @@ function Products({ Toggle }) {
         }
     }
     
-
     const handleEdit = (id) => {
         setEditProductId(id)
         const productToEdit = products.find((product) => product.key === id)
         if (productToEdit) {
             setFormData({
                 name: productToEdit.name,
-                description: productToEdit.description,
-                unitPrice: parseFloat(productToEdit.unitPrice).toFixed(2),
-                quantity: productToEdit.quantity
+                size: productToEdit.size,
+                purchasePrice: parseFloat(productToEdit.purchasePrice).toFixed(2),
+                retailPrice: parseFloat(productToEdit.retailPrice).toFixed(2),
+                quantity: productToEdit.quantity,
+                picture: productToEdit.picture
             })
             setEditMode(true)
             setShowForm(true)
@@ -137,9 +153,11 @@ function Products({ Toggle }) {
     const handleCloseForm = () => {
         setFormData({
             name: '',
-            description: '',
-            unitPrice: '',
-            quantity: 0
+            size: '',
+            purchasePrice: '',
+            retailPrice: '',
+            quantity: '',
+            picture: null
         })
         setEditMode(false)
         setEditProductId('')
@@ -152,6 +170,13 @@ function Products({ Toggle }) {
             ...formData,
             [name]: value
         })
+
+        if (e.target.type === 'file') {
+            setFormData({
+                ...formData,
+                picture: e.target.files[0]
+            })
+        }
     }
 
     useEffect(() => {
@@ -222,9 +247,11 @@ function Products({ Toggle }) {
                                     <thead>
                                         <tr>
                                             <th scope='col'>Product ID</th>
+                                            <th scope='col'>Picture</th>
                                             <th scope='col'>Product Name</th>
-                                            <th scope='col'>Description</th>
-                                            <th scope='col'>Unit Price</th>
+                                            <th scope='col'>Size</th>
+                                            <th scope='col'>Purchase Price</th>
+                                            <th scope='col'>Retail Price</th>
                                             {userAccess !== "Member" && (
                                                 <th scope='col'>Actions</th>
                                             )}
@@ -237,9 +264,14 @@ function Products({ Toggle }) {
                                         }).map(product => (
                                             <tr key={product.key}>
                                                 <td>{product.key}</td>
+                                                <td>
+                                                    {product.picture ? (<img src={product.picture} alt="Product" style={{ width: '100px', height: '100px' }} />):
+                                                    (<><img src={noImage} alt="No Image" style={{ width: '100px', height: '100px' }} /></>)}
+                                                </td>
                                                 <td>{product.name}</td>
-                                                <td>{product.description}</td>
-                                                <td>{product.unitPrice}</td>
+                                                <td>{product.size}</td>
+                                                <td>{product.purchasePrice}</td>
+                                                <td>{product.retailPrice}</td>
                                                 {userAccess !== "Member" && ( 
                                                 <td>
                                                     <button onClick={() => handleEdit(product.key)} className="btn btn-success me-2">Edit</button>
@@ -266,10 +298,82 @@ function Products({ Toggle }) {
                             </div>
                             <div className="modal-body d-flex justify-content-center align-items-center">
                                 <form onSubmit={handleAdd} className="w-75">
-                                    <input type="text" name="name" value={formData.name} onChange={handleChange} className="form-control mb-3" placeholder="Name" required />
-                                    <input type="text" name="description" value={formData.description} onChange={handleChange} className="form-control mb-3" placeholder="Description" required />
-                                    <input type="number" name="unitPrice" value={formData.unitPrice} onChange={handleChange} className="form-control mb-3" placeholder="Unit Price" required />
-                                    {!editMode && <input type="number" name="quantity" value={formData.quantity} onChange={handleChange} className="form-control mb-3" placeholder="Quantity" required />}
+                                    <div className="form-floating">
+                                        <input type="file" id="picture" name="picture" onChange={handleChange} className="form-control mb-3" accept="image/*" />
+                                        <label htmlFor="picture">Product Picture</label>
+                                    </div>
+                                    <div className="form-floating">
+                                        <input type="text" id="floatingInput" name="name" value={formData.name} onChange={handleChange} className="form-control mb-3" placeholder="Product Name" required />
+                                        <label htmlFor="floatingInput">Product Name</label>
+                                    </div>
+                                    <div className="mb-3">
+                                    <label className="form-label">Size:</label>
+                                    <div className="form-check">
+                                        <input 
+                                            className="form-check-input" 
+                                            role='button'
+                                            type="radio" 
+                                            name="size" 
+                                            value="Small" 
+                                            checked={formData.size === "Small"} 
+                                            onChange={handleChange} 
+                                            required 
+                                        />
+                                        <label className="form-check-label">Small</label>
+                                    </div>
+                                    <div className="form-check">
+                                        <input 
+                                            className="form-check-input" 
+                                            role='button'
+                                            type="radio" 
+                                            name="size" 
+                                            value="Medium" 
+                                            checked={formData.size === "Medium"} 
+                                            onChange={handleChange} 
+                                            required 
+                                        />
+                                        <label className="form-check-label">Medium</label>
+                                    </div>
+                                    <div className="form-check">
+                                        <input 
+                                            className="form-check-input" 
+                                            role='button'
+                                            type="radio" 
+                                            name="size" 
+                                            value="Large" 
+                                            checked={formData.size === "Large"} 
+                                            onChange={handleChange} 
+                                            required 
+                                        />
+                                        <label className="form-check-label">Large</label>
+                                    </div>
+                                    <div className="form-check">
+                                        <input 
+                                            className="form-check-input" 
+                                            role='button'
+                                            type="radio" 
+                                            name="size" 
+                                            value="None" 
+                                            checked={formData.size === "None"} 
+                                            onChange={handleChange} 
+                                            required 
+                                        />
+                                        <label className="form-check-label">None</label>
+                                    </div>
+                                </div>
+                                    <div className="form-floating">
+                                        <input type="number" id="floatingInput" name="purchasePrice" value={formData.purchasePrice} onChange={handleChange} className="form-control mb-3" placeholder="Purchase Price" required />
+                                        <label htmlFor="floatingInput">Purchase Price</label>
+                                    </div>
+                                    <div className="form-floating">
+                                        <input type="number" id="floatingInput" name="retailPrice" value={formData.retailPrice} onChange={handleChange} className="form-control mb-3" placeholder="Retail Price" required />
+                                        <label htmlFor="floatingInput">Retail Price</label>
+                                    </div>
+                                    {!editMode && 
+                                    <div className="form-floating">
+                                        <input type="number" id="floatingInput" name="quantity" value={formData.quantity} onChange={handleChange} className="form-control mb-3" placeholder="Quantity" required />
+                                        <label htmlFor="floatingInput">Quantity</label>
+                                    </div>}
                                     {editMode && <input type="hidden" name="quantity" value={formData.quantity} />}
                                     <div className="d-grid my-3 shadow">
                                         <button type="submit" className="btn btn-primary login-btn">{editMode ? 'Update' : 'Submit'}</button>

@@ -11,6 +11,7 @@ function Sales({ Toggle }) {
     const [products, setProducts] = useState([])
     const [showForm, setShowForm] = useState(false)
     const [loading, setLoading] = useState(true)
+    const [returnReason, setReturnReason] = useState('')
     const [editSaleId, setEditSaleId] = useState('')
     const [searchQuery, setSearchQuery] = useState('')
     const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false)
@@ -37,7 +38,16 @@ function Sales({ Toggle }) {
         const fetchData = async () => {
             setLoading(true)
 
-            const salesSnapshot = await get(ref(db, viewMode === 'active' ? 'sales' : 'salesArchive'))
+            let salesRef
+            if (viewMode === 'active') {
+                salesRef = ref(db, 'sales')
+            } else if (viewMode === 'archive') {
+                salesRef = ref(db, 'salesArchive')
+            } else if (viewMode === 'returned') {
+                salesRef = ref(db, 'returnedSales')
+            }
+
+            const salesSnapshot = await get(salesRef)
             if (salesSnapshot.exists()) {
                 const salesArray = []
                 salesSnapshot.forEach((childSnapshot) => {
@@ -129,7 +139,7 @@ function Sales({ Toggle }) {
                 saleData.products.push({
                     productName: productItem.productName,
                     quantity: productItem.quantity,
-                    totalPrice: selectedProduct.unitPrice * productItem.quantity,
+                    totalPrice: selectedProduct.retailPrice * productItem.quantity,
                 })
     
                 saleData.totalPrice += saleData.products[saleData.products.length - 1].totalPrice
@@ -227,19 +237,49 @@ function Sales({ Toggle }) {
         try {
             const saleToReverse = sales.find((sale) => sale.key === editSaleId)
             if (saleToReverse) {
-                for (const productItem of saleToReverse.products) {
-                    const selectedProduct = products.find((product) => product.name === productItem.productName)
-                    if (selectedProduct) {
-                        await update(ref(db, `products/${selectedProduct.key}`), {
-                            quantity: selectedProduct.quantity + Number(productItem.quantity),
+                const productsSnapshot = await get(ref(db, 'products'))
+                if (productsSnapshot.exists()) {
+                    const updatedProductsArray = []
+                    productsSnapshot.forEach((childSnapshot) => {
+                        updatedProductsArray.push({
+                            key: childSnapshot.key,
+                            ...childSnapshot.val(),
                         })
+                    })
+    
+                    setProducts(updatedProductsArray)
+    
+                    for (const productItem of saleToReverse.products) {
+                        const selectedProduct = updatedProductsArray.find((product) => product.name === productItem.productName)
+                        if (selectedProduct) {
+                            const newQuantity = selectedProduct.quantity + Number(productItem.quantity)
+                            console.log(`Updating quantity for product ${selectedProduct.name}. Previous quantity: ${selectedProduct.quantity}, New quantity: ${newQuantity}`)
+    
+                            await update(ref(db, `products/${selectedProduct.key}`), {
+                                quantity: newQuantity,
+                            })
+                        } else {
+                            console.log(`Product ${productItem.productName} not found in inventory.`)
+                        }
                     }
+    
+                    const returnedSaleRef = ref(db, `returnedSales/${editSaleId}`)
+                    await set(returnedSaleRef, {
+                        ...saleToReverse,
+                        reasonForReturn: returnReason,
+                    })
+    
+                    await remove(ref(db, `sales/${editSaleId}`))
+    
+                    setConfirmationMessage('Sale reversed successfully.')
+                    setSales((prevSales) => prevSales.filter((sale) => sale.key !== editSaleId))
+                } else {
+                    console.error('Error fetching products data.')
+                    setErrorMessage('Error reversing transaction: Products data not found.')
                 }
-                await remove(ref(db, `sales/${editSaleId}`))
-                setConfirmationMessage('Sale reversed successfully.')
-                setSales((prevSales) => prevSales.filter((sale) => sale.key !== editSaleId))
             } else {
                 console.error('Sale not found with ID:', editSaleId)
+                setErrorMessage('Error reversing transaction: Sale not found.')
             }
         } catch (error) {
             console.error('Error reversing transaction: ', error)
@@ -248,7 +288,7 @@ function Sales({ Toggle }) {
             setEditSaleId('')
             setShowUndoConfirmation(false)
         }
-    }
+    }    
 
     const handleArchive = (id) => {
         setEditSaleId(id)
@@ -286,14 +326,31 @@ function Sales({ Toggle }) {
 
     const confirmDelete = async () => {
         try {
-            await remove(ref(db, 'salesArchive/' + editSaleId))
-            console.log('Sale with ID ', editSaleId, ' successfully deleted from archive')
-
+            let saleRef = ref(db, 'salesArchive/' + editSaleId)
+            let snapshot = await get(saleRef)
+            
+            if (snapshot.exists()) {
+                await remove(saleRef);
+                console.log('Sale with ID ', editSaleId, ' successfully deleted from archive');
+            } else {
+                saleRef = ref(db, 'returnedSales/' + editSaleId)
+                snapshot = await get(saleRef)
+                
+                if (snapshot.exists()) {
+                    await remove(saleRef)
+                    console.log('Sale with ID ', editSaleId, ' successfully deleted from returnedSales')
+                } else {
+                    console.error('Sale with ID ', editSaleId, ' not found in archive or returnedSales')
+                    setErrorMessage('Error: Sale not found in archive or returnedSales')
+                    return
+                }
+            }
+    
             setConfirmationMessage('Sale deleted successfully.')
             setSales((prevSales) => prevSales.filter((sale) => sale.key !== editSaleId))
         } catch (error) {
-            setErrorMessage('Error deleting sale from archive.')
-            console.error('Error deleting sale from archive: ', error)
+            setErrorMessage('Error deleting sale.')
+            console.error('Error deleting sale: ', error)
         } finally {
             setEditSaleId('')
             setShowDeleteConfirmation(false)
@@ -441,6 +498,7 @@ function Sales({ Toggle }) {
                                             onChange={handleViewModeChange}>
                                             <option value="active">Active Sales</option>
                                             <option value="archive">Archived Sales</option>
+                                            <option value="returned">Returned Sales</option>
                                         </select>
                                     </div>
                                 </div>
@@ -466,6 +524,9 @@ function Sales({ Toggle }) {
                                             <th scope='col'>Quantity</th>
                                             <th scope='col'>Total Price</th>
                                             <th scope='col'>DateTime</th>
+                                            {viewMode === "returned" && (
+                                                <th scope='col'>Return Reason</th>
+                                            )}
                                             {userAccess !== "Member" && (
                                                 <th scope='col'>Actions</th>
                                             )}
@@ -497,18 +558,25 @@ function Sales({ Toggle }) {
                                             </td>
                                             <td>{sale.totalPrice.toFixed(2)}</td>
                                             <td>{sale.dateTime}</td>
+                                            {viewMode === 'returned' && (
+                                                <td>{sale.reasonForReturn}</td> 
+                                            )}
                                             {userAccess !== "Member" && (
                                                 <td>
                                                     {viewMode === 'archive' ? (
                                                         <>
-                                                        <button onClick={() => handleUnarchive(sale.key)} className="btn btn-success me-2">Unarchive</button>
-                                                        <button onClick={() => handleDelete(sale.key)} className="btn btn-danger">Delete</button>
+                                                            <button onClick={() => handleUnarchive(sale.key)} className="btn btn-success me-2">Unarchive</button>
+                                                            <button onClick={() => handleDelete(sale.key)} className="btn btn-danger">Delete</button>
                                                         </>
                                                     ) : (
-                                                        <>
-                                                            <button onClick={() => handleUndo(sale.key)} className="btn btn-success me-2">Undo</button>
-                                                            <button onClick={() => handleArchive(sale.key)} className="btn btn-danger">Archive</button>
-                                                        </>
+                                                        viewMode === 'returned' ? (
+                                                            <button onClick={() => handleDelete(sale.key)} className="btn btn-danger">Delete</button>
+                                                        ) : (
+                                                            <>
+                                                                <button onClick={() => handleUndo(sale.key)} className="btn btn-success me-2">Return</button>
+                                                                <button onClick={() => handleArchive(sale.key)} className="btn btn-danger">Archive</button>
+                                                            </>
+                                                        )
                                                     )}
                                                 </td>
                                             )}
@@ -673,6 +741,35 @@ function Sales({ Toggle }) {
                 </div>
             )}
 
+            {showUndoConfirmation && (
+                <div className='modal fadein d-block' style={{ display: 'block', backgroundColor: 'rgba(0, 0, 0, 0.5)' }}>
+                    <div className='modal-dialog modal-dialog-centered'>
+                        <div className='modal-content'>
+                            <div className='modal-header'>
+                                <h5 className='modal-title'>Return Sale</h5>
+                                <button type='button' className='btn-close' onClick={() => setShowUndoConfirmation(false)} aria-label='Close'></button>
+                            </div>
+                            <div className='modal-body'>
+                                <div className='form-group'>
+                                    <label htmlFor='reasonInput'>Reason for Return:</label>
+                                    <input
+                                        type='text'
+                                        className="form-control"
+                                        id='reasonInput'
+                                        value={returnReason}
+                                        onChange={(e) => setReturnReason(e.target.value)}
+                                    />
+                                </div>
+                            </div>
+                            <div className='modal-footer'>
+                                <button type='button' className='btn btn-secondary' onClick={() => setShowUndoConfirmation(false)}>Cancel</button>
+                                <button type='button' className='btn btn-danger' onClick={confirmUndo}>Return</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             <ConfirmationModal
                 show={showArchiveConfirmation}
                 onClose={() => setShowArchiveConfirmation(false)}
@@ -680,15 +777,6 @@ function Sales({ Toggle }) {
                 title="Confirm Archive"
                 message="Are you sure you want to archive this sale?"
                 confirmButtonText="Archive"
-            />
-
-            <ConfirmationModal
-                show={showUndoConfirmation}
-                onClose={() => setShowUndoConfirmation(false)}
-                onConfirm={confirmUndo}
-                title="Confirm Undo"
-                message="Undo this sale and restore inventory quantities?"
-                confirmButtonText="Undo"
             />
 
             <ConfirmationModal

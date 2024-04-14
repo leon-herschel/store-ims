@@ -125,7 +125,7 @@ function Inventory({ Toggle }) {
     const calculateTotalValue = (product) => {
         const matchingProduct = products.find((p) => p.key === product.key)
         if (matchingProduct) {
-            const totalValue = matchingProduct.unitPrice * product.quantity
+            const totalValue = matchingProduct.retailPrice * product.quantity
             return totalValue.toFixed(2)
         }
         return 0
@@ -248,15 +248,15 @@ function Inventory({ Toggle }) {
                                             <tr key={product.key}>
                                                 <td>
                                                     <div className="d-flex align-items-center">
-                                                        <div className="me-auto">
+                                                        <div className="col-2">
                                                             {product.quantity < 5 && product.quantity != 0 && (
-                                                                <i className="bi bi-exclamation-triangle-fill text-warning fs-5 icon-inv" data-bs-toggle="tooltip" data-bs-placement="top" title="Low stock"></i>
+                                                                <i className="bi bi-exclamation-triangle-fill text-warning fs-5 icon-inv ps-0" data-bs-toggle="tooltip" data-bs-placement="top" title="Low stock"></i>
                                                             )}
                                                             {product.quantity == 0 && (
                                                                 <i className="bi bi-exclamation-triangle-fill text-danger fs-5 icon-inv" data-bs-toggle="tooltip" data-bs-placement="top" title="Out of stock"></i>
                                                             )}
                                                         </div>
-                                                        <div className={userAccess === "Member" ? "me-5 pe-5" : "me-5 pe-5"}>
+                                                        <div className="col me-4">
                                                             {product.key}
                                                         </div>
                                                     </div>
