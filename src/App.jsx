@@ -6,6 +6,7 @@ import Home from './Pages/Home'
 import Products from './Pages/Products'
 import Inventory from './Pages/Inventory'
 import Sales from './Pages/Sales/Sales'
+import Register from './Pages/Register'
 import Users from './Pages/Users'
 import Reports from './Pages/Reports'
 import Login from './Components/Login/Login'
@@ -47,6 +48,7 @@ function App() {
                     <Route path="/products" element={Private(<Products Toggle={handleToggle}/>)}></Route>
                     <Route path="/inventory" element={Private(<Inventory Toggle={handleToggle}/>)}></Route>
                     <Route path="/sales" element={Private(<Sales Toggle={handleToggle}/>)}></Route>
+                    <Route path="/register" element={Private(<Register Toggle={handleToggle}/>)}></Route>
                     <Route path="/users" element={Private(<Users Toggle={handleToggle}/>)}></Route>
                     <Route path="/reports" element={Private(<Reports Toggle={handleToggle}/>)}></Route>
                     <Route path="*" element={Private(<PageNotFound/>)} />

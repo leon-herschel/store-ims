@@ -45,7 +45,11 @@ function Sidebar() {
         </Link>
         <Link to="/sales" className={location.pathname === '/sales' ? 'active list-group-item py-2 rounded' : 'list-group-item py-2 rounded'}>
           <i className='bi bi-receipt fs-5 me-3'></i>
-          <span className="d-none d-sm-inline">Sales</span>
+          <span className="d-none d-sm-inline">Sales Records</span>
+        </Link>
+        <Link to="/register" className={location.pathname === '/register' ? 'active list-group-item py-2 rounded' : 'list-group-item py-2 rounded'}>
+          <i className='bi bi-basket2 fs-5 me-3'></i>
+          <span className="d-none d-sm-inline">Sales Register</span>
         </Link>
         {userAccess === 'Admin' || userAccess === 'Superadmin' ? (
             <>

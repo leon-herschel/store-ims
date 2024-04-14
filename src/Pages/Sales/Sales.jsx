@@ -474,7 +474,7 @@ function Sales({ Toggle }) {
     return (
         <div className='px-3'>
             <UserAccessFetcher currentUser={currentUser} setUserAccess={setUserAccess} />
-            <Nav Toggle={Toggle} pageTitle="Sales"/>
+            <Nav Toggle={Toggle} pageTitle="Sales Records"/>
             <div className='px-3 position-relative'>
                 <div className="position-fixed top-1 start-50 translate-middle-x" style={{ zIndex: 1070 }}>
                     {confirmationMessage && (

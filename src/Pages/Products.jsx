@@ -265,7 +265,7 @@ function Products({ Toggle }) {
                                             <tr key={product.key}>
                                                 <td>{product.key}</td>
                                                 <td>
-                                                    {product.picture ? (<img src={product.picture} alt="Product" style={{ width: '100px', height: '100px' }} />):
+                                                    {product.picture ? (<img src={product.picture} className='rounded' alt="Product" style={{ width: '100px', height: '100px' }} />):
                                                     (<><img src={noImage} alt="No Image" style={{ width: '100px', height: '100px' }} /></>)}
                                                 </td>
                                                 <td>{product.name}</td>
